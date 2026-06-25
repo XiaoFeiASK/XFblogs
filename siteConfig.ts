@@ -4,7 +4,7 @@ export const siteConfig = {
   // 1. 网站标题与博主信息
   title: "XiaoFei の 宝藏之地",
   faviconUrl: "https://bu.dusays.com/2026/03/24/69c1e38ac1846.jpg",
-  authorName: "XingHuiSama",
+  authorName: "XiaoFei",
   bio: "在代码、学术与分子动力学模拟间穿梭的普通人。近期正埋头于 GROMACS 模拟研究与神经网络计算。",
 
   navTitle: "XiaoFei",
@@ -34,7 +34,7 @@ export const siteConfig = {
     github: "https://github.com/heiehiehi",
     gitee: "https://github.com/heiehiehi",
     google: "mailto:bilibiliwuwuwu@gmail.com",
-    email: "1124533793@qq.com",
+    email: "2017382524@qq.com",
     qq: "1124533793",
     wechat: "XingHuisama",
   },
