@@ -36,7 +36,7 @@ export const siteConfig = {
     google: "mailto:bilibiliwuwuwu@gmail.com",
     email: "2017382524@qq.com",
     qq: "1124533793",
-    wechat: "XingHuisama",
+    wechat: "XiaoFei",
   },
   counts: {
     photos: 128, // 照片墙数量可以手动写死或动态计算
