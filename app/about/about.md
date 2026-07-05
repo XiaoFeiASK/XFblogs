@@ -16,6 +16,6 @@ description: ''
 **💻 软件工程能力**
 
 * **后端开发:** 掌握Springboot,Springcloud,Mysql,Mybatis,Redis,Rocketmq等技术栈，能够处理复杂的数据逻辑与计算任务调度。
-* **Agent开发:掌握LangChain,Langgraph,Eino,RAG,ReAct等技术栈，**
+* **Agent开发:掌握LangChain,Langgraph,Eino,RAG,ReAct等技术栈，熟悉Agent短期记忆，长期记忆开发**
 
 **欢迎各位朋友联系交流~**
