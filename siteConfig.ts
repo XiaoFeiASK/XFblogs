@@ -5,7 +5,7 @@ export const siteConfig = {
   title: "XiaoFei の 宝藏之地",
   faviconUrl: "https://bu.dusays.com/2026/03/24/69c1e38ac1846.jpg",
   authorName: "XiaoFei",
-  bio: "专注于后端开发与Agent/大模型应用开发的初学者",
+  bio: "专注于后端开发与Agent/大模型应用开发的初学者，我期待任意形式的实习机会~",
 
   navTitle: "XiaoFei",
 
