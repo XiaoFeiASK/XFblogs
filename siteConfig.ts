@@ -32,7 +32,7 @@ export const siteConfig = {
   cloudMusicIds: ["1809646618", "3361076230", "1859390262"],
   social: {
     github: "https://github.com/XiaoFeiASK",
-    gitee: "https://github.com/heiehiehi",
+    gitee: "https://github.com/XiaoFeiASK",
     google: "mailto:bilibiliwuwuwu@gmail.com",
     email: "2017382524@qq.com",
     qq: "2017382524",
@@ -66,6 +66,6 @@ export const siteConfig = {
     maxOutputTokens: 150,
     temperature: 0.85,
   },
-  friendLinkApplyFormat: "名称：XingHuiSamaの宝藏之地\n简介：今天我也要学习吗\n链接：https://www.xinghuisama.top\n头像：https://bu.dusays.com/2026/03/24/69c1e38ac1846.jpg",
+  friendLinkApplyFormat: "名称：XingHuiSamaの宝藏之地\n简介：今天也可以学计算机吗？\n链接：https://www.xinghuisama.top\n头像：https://bu.dusays.com/2026/03/24/69c1e38ac1846.jpg",
   enableLevelSystem: true,
 };
