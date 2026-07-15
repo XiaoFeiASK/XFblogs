@@ -193,6 +193,44 @@ async def publish_to_github_pages(request: Request):
         return {"success": False, "message": f"静态发布引擎崩溃: {str(e)}"}
 
 
+def run_git(args, cwd, env=None):
+    return subprocess.run(
+        args,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env
+    )
+
+
+def command_output(process):
+    return "\n".join(
+        part.strip()
+        for part in [process.stdout, process.stderr]
+        if part and part.strip()
+    )
+
+
+def is_missing_remote_branch(output):
+    lowered = output.lower()
+    return (
+        "couldn't find remote ref" in lowered
+        or "could not find remote ref" in lowered
+        or "couldn't find remote branch" in lowered
+    )
+
+
+def is_no_commit_needed(output):
+    lowered = output.lower()
+    return (
+        "nothing to commit" in lowered
+        or "no changes added to commit" in lowered
+        or "working tree clean" in lowered
+    )
+
+
 # ☁️ B 线接口：同步源代码到 Vercel 仓库 (全新核心功能)
 # ☁️ B 线接口：同步源代码到 Vercel 仓库 (全新终极强绑定机制)
 @router.post("/source")
@@ -200,6 +238,12 @@ async def sync_source_to_vercel(request: Request):
     try:
         payload = await request.json()
         blog_path = payload.get("blogPath", "").strip()
+
+        if not blog_path or not os.path.exists(blog_path):
+            return {"success": False, "message": "目标博客路径不存在，无法同步源码！"}
+
+        if not os.path.exists(os.path.join(blog_path, ".git")):
+            return {"success": False, "message": "目标博客路径不是 Git 仓库，请先初始化部署环境。"}
 
         # 读取配置
         if not os.path.exists(CONFIG_FILE):
@@ -209,19 +253,10 @@ async def sync_source_to_vercel(request: Request):
             config = json.load(f)
 
         source_repo = config.get("sourceRepoUrl", "").strip()
-        source_branch = config.get("sourceBranch", "main").strip()
+        source_branch = config.get("sourceBranch", "main").strip() or "main"
 
         if not source_repo:
             return {"success": False, "message": "B 线源码仓库地址为空，无法同步！"}
-
-        os.chdir(blog_path)
-
-        # 1. 添加所有代码改动
-        subprocess.run(["git", "add", "."], check=True)
-
-        # 2. 提交代码 (这里加入容错)
-        commit_cmd = 'git commit -m "Auto sync source code for Vercel 🚀" || echo "No changes to commit"'
-        subprocess.run(commit_cmd, shell=True, capture_output=True)
 
         # 🌟 终极杀招：强行绑定 B 线专属私钥，无视 Windows 智障路由！
         ssh_dir = os.path.expanduser("~/.ssh")
@@ -232,20 +267,50 @@ async def sync_source_to_vercel(request: Request):
         custom_env = os.environ.copy()
         custom_env["GIT_SSH_COMMAND"] = f'ssh -i "{priv_key_path}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'
 
-        # 3. 推送 (携带我们强行塞进去的钥匙环境变量)
-        push_cmd = f'git push "{source_repo}" HEAD:{source_branch}'
-        push_process = subprocess.run(
-            push_cmd,
-            shell=True,
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            env=custom_env  # 👈 就是这里！把钥匙按在 Git 脸上！
+        # 1. 添加所有代码改动
+        add_process = run_git(["git", "add", "."], blog_path, custom_env)
+        if add_process.returncode != 0:
+            return {"success": False, "message": f"源码暂存失败:\n{command_output(add_process)}"}
+
+        # 2. 提交代码。没有变更时继续执行远端同步检查。
+        commit_process = run_git(
+            ["git", "commit", "-m", "Auto sync source code for Vercel 🚀"],
+            blog_path,
+            custom_env
         )
+        commit_log = command_output(commit_process)
+        if commit_process.returncode != 0 and not is_no_commit_needed(commit_log):
+            return {"success": False, "message": f"源码提交失败:\n{commit_log}"}
+
+        # 3. 先拉取目标分支，避免 GitHub 上已有新提交时 push 被 rejected。
+        fetch_process = run_git(["git", "fetch", source_repo, source_branch], blog_path, custom_env)
+        fetch_log = command_output(fetch_process)
+        branch_missing = fetch_process.returncode != 0 and is_missing_remote_branch(fetch_log)
+
+        if fetch_process.returncode != 0 and not branch_missing:
+            return {"success": False, "message": f"拉取远端源码分支失败:\n{fetch_log}"}
+
+        if not branch_missing:
+            rebase_process = run_git(["git", "rebase", "FETCH_HEAD"], blog_path, custom_env)
+            if rebase_process.returncode != 0:
+                rebase_log = command_output(rebase_process)
+                run_git(["git", "rebase", "--abort"], blog_path, custom_env)
+                return {
+                    "success": False,
+                    "message": (
+                        "源码同步失败：GitHub 上有新提交，自动 rebase 时发生冲突。\n"
+                        "请先拉取/合并远端改动后再同步。\n\n"
+                        f"{rebase_log}"
+                    )
+                }
+
+        # 4. 推送 (携带我们强行塞进去的钥匙环境变量)
+        push_process = run_git(["git", "push", source_repo, f"HEAD:{source_branch}"], blog_path, custom_env)
 
         # 判断是否成功
-        if push_process.returncode != 0 and "Everything up-to-date" not in push_process.stderr:
-            return {"success": False, "message": f"源码同步失败:\n{push_process.stderr}"}
+        push_log = command_output(push_process)
+        if push_process.returncode != 0 and "Everything up-to-date" not in push_log:
+            return {"success": False, "message": f"源码同步失败:\n{push_log}"}
 
         return {"success": True, "message": "☁️ B线: 源码已成功送达 GitHub，Vercel 构建已触发！"}
 
