@@ -18,7 +18,7 @@ export default function Navbar() {
   const smoothRotation = useSpring(rawRotation, { stiffness: 200, damping: 25 });
   const inverseRotation = useTransform(smoothRotation, (r) => -r);
 
-  const handlePan = (event: any, info: PanInfo) => {
+  const handlePan = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (!wheelRef.current) return;
     const rect = wheelRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -37,17 +37,11 @@ export default function Navbar() {
 
   // --- 🌟 物理引擎：手机端按钮拖拽逻辑 ---
   const dragY = useMotionValue(0);
-  const [constraints, setConstraints] = useState({ top: 0, bottom: 0 });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const vh = window.innerHeight;
-      setConstraints({
-        top: -(vh / 2) + 80,
-        bottom: (vh / 2) - 80
-      });
-    }
-  }, []);
+  const vh = typeof window === 'undefined' ? 0 : window.innerHeight;
+  const constraints = {
+    top: vh ? -(vh / 2) + 80 : 0,
+    bottom: vh ? (vh / 2) - 80 : 0
+  };
 
   useEffect(() => {
     if (isMobileMenuOpen) rawRotation.set(0);
@@ -74,15 +68,13 @@ export default function Navbar() {
     { name: '归档', href: '/timeline' },
     { name: '照片墙', href: '/photowall' },
     { name: '音乐', href: '/music' },
-    { name: '灵境', href: '/tree' },
     { name: '说说', href: '/moments' },
     { name: '杂谈', href: '/chatter' },
     { name: '友链', href: '/friends' },
     { name: '关于', href: '/about' },
   ];
 
-  // 🌟 核心：过滤掉“灵境”，专供手机端使用，保证圆盘自动重新均匀排布
-  const mobileNavLinks = navLinks.filter(link => link.href !== '/tree');
+  const mobileNavLinks = navLinks;
 
   return (
     <>

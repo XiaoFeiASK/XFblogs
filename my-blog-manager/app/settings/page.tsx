@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useOperations } from '../../context/OperationContext';
 import { siteConfig } from '../../siteConfig';
 import Navbar from '../../components/Navbar';
@@ -17,15 +17,52 @@ import DisplaySection from '../../components/settings/DisplaySection';
 import CommentSection from '../../components/settings/CommentSection';
 import DanmakuSection from '../../components/settings/DanmakuSection';
 import FooterSection from '../../components/settings/FooterSection';
-// 👇 🌟 引入刚写的 AI 配置组件
-import AICatSection from '../../components/settings/AICatSection';
+
+type SiteFormData = {
+  authorName: string;
+  bio: string;
+  avatarUrl: string;
+  social: Record<string, unknown>;
+  cloudMusicIds: Array<string | number>;
+  bgImages: string[];
+  gitalkConfig: {
+    clientID: string;
+    clientSecret: string;
+    repo: string;
+    owner: string;
+    admin: string[];
+  };
+  danmakuList: string[];
+  buildDate: string;
+  icpConfig: { name: string; link: string };
+  footerBadges: unknown[];
+  newMusicId?: string;
+  [key: string]: unknown;
+};
+
+type BackendConfig = {
+  api_port: string | number;
+};
+
+type RemoteConfigResponse = {
+  success?: boolean;
+  message?: string;
+  data?: Partial<SiteFormData>;
+};
+
+type MusicDetail = {
+  id?: string | number;
+  name?: string;
+  error?: boolean;
+  [key: string]: unknown;
+};
 
 function SettingsContent() {
-  const { operations, addOperation } = useOperations();
+  const { addOperation } = useOperations();
   const [activeTab, setActiveTab] = useState('profile');
   const { showToast } = useToast();
 
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useState<SiteFormData>({
     authorName: siteConfig.authorName || "",
     bio: siteConfig.bio || "",
     avatarUrl: siteConfig.avatarUrl || "",
@@ -42,42 +79,34 @@ function SettingsContent() {
     danmakuList: [...(siteConfig.danmakuList || [])],
     buildDate: siteConfig.buildDate || "2026-03-23T00:00:00",
     icpConfig: siteConfig.icpConfig || { name: "", link: "" },
-    footerBadges: [...(siteConfig.footerBadges || [])],
-    // 👇 🌟 初始化小猫 AI 配置数据
-    geminiConfig: siteConfig.geminiConfig || {
-      modelId: 'gemini-2.5-flash-lite',
-      systemPrompt: '',
-      maxOutputTokens: 150,
-      temperature: 0.85
-    }
+    footerBadges: [...(siteConfig.footerBadges || [])]
   });
 
   const [queryLoading, setQueryLoading] = useState(false);
-  const [queryResult, setQueryResult] = useState<any>(null);
-  const [musicDetails, setMusicDetails] = useState<Record<string, any>>({});
+  const [queryResult, setQueryResult] = useState<MusicDetail | null>(null);
+  const [musicDetails, setMusicDetails] = useState<Record<string, MusicDetail>>({});
 
   useEffect(() => {
     const fetchRealConfig = async () => {
       try {
         const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-        const configData = await configRes.json();
+        const configData = await configRes.json() as BackendConfig;
 
         const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/config/get`, { cache: 'no-store' });
-        const data = await res.json();
+        const data = await res.json() as RemoteConfigResponse;
 
         if (data.success && data.data) {
           console.log("✅ 成功从后端拉取到真实配置:", data.data);
-          setFormData((prev: any) => ({
+          const remoteData = data.data;
+          setFormData((prev) => ({
             ...prev,
-            ...data.data,
-            social: { ...(prev.social || {}), ...(data.data.social || {}) },
-            gitalkConfig: { ...(prev.gitalkConfig || {}), ...(data.data.gitalkConfig || {}) },
-            danmakuList: data.data.danmakuList ? [...data.data.danmakuList] : prev.danmakuList,
-            buildDate: data.data.buildDate || prev.buildDate,
-            icpConfig: data.data.icpConfig || prev.icpConfig,
-            footerBadges: data.data.footerBadges ? [...data.data.footerBadges] : prev.footerBadges,
-            // 👇 🌟 合并后端发来的小猫配置
-            geminiConfig: { ...(prev.geminiConfig || {}), ...(data.data.geminiConfig || {}) }
+            ...remoteData,
+            social: { ...prev.social, ...(remoteData.social || {}) },
+            gitalkConfig: { ...prev.gitalkConfig, ...(remoteData.gitalkConfig || {}) },
+            danmakuList: remoteData.danmakuList ? [...remoteData.danmakuList] : prev.danmakuList,
+            buildDate: remoteData.buildDate || prev.buildDate,
+            icpConfig: remoteData.icpConfig || prev.icpConfig,
+            footerBadges: remoteData.footerBadges ? [...remoteData.footerBadges] : prev.footerBadges
           }));
         } else {
           console.error("❌ 后端返回失败:", data.message);
@@ -90,33 +119,34 @@ function SettingsContent() {
     };
 
     fetchRealConfig();
-  }, []);
+  }, [showToast]);
 
-  const handleUpdate = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
+  const handleUpdate = (field: string, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const fetchMusicDetail = async (id: string) => {
     try {
       const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
+      const configData = await configRes.json() as BackendConfig;
       const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/music/query/${id}`, { cache: 'no-store' });
-      const data = await res.json();
-      return data.success ? data.data : { error: true, id, name: "查询失败或无版权" };
-    } catch (error) {
+      const data = await res.json() as { success?: boolean; data?: MusicDetail };
+      return data.success && data.data ? data.data : { error: true, id, name: "查询失败或无版权" };
+    } catch {
       return { error: true, id, name: "后端通信通道断开" };
     }
   };
 
   useEffect(() => {
     const loadInitialMusicDetails = async () => {
-      const details: Record<string, any> = { ...musicDetails };
+      const details: Record<string, MusicDetail> = { ...musicDetails };
       let hasUpdate = false;
       for (const id of formData.cloudMusicIds || []) {
-        if (!details[id]) {
-          const info = await fetchMusicDetail(id);
+        const key = String(id);
+        if (!details[key]) {
+          const info = await fetchMusicDetail(key);
           if (info) {
-            details[id] = info;
+            details[key] = info;
             hasUpdate = true;
           }
         }
@@ -126,7 +156,7 @@ function SettingsContent() {
     if (formData.cloudMusicIds?.length > 0) {
       loadInitialMusicDetails();
     }
-  }, [formData.cloudMusicIds]);
+  }, [formData.cloudMusicIds, musicDetails]);
 
   const queryMusic = async () => {
     if (!formData.newMusicId) {
@@ -169,7 +199,7 @@ function SettingsContent() {
     }
   };
 
-  const pushToQueue = (label: string, key?: string, value?: any) => {
+  const pushToQueue = (label: string, key?: string, value?: unknown) => {
     addOperation({
       id: Date.now().toString(),
       type: 'CONFIG',
@@ -183,7 +213,6 @@ function SettingsContent() {
     showToast(`🎉 【${label}】已加入右上角操作队列！`, "success");
   };
 
-  // 👇 🌟 在菜单里增加 AI 猫咪入口
   const menuItems = [
     { id: 'profile', name: '个人名片设置', icon: '👤' },
     { id: 'display', name: '视窗画面设置', icon: '🪟' },
@@ -193,7 +222,6 @@ function SettingsContent() {
     { id: 'footer', name: '首页底部设置', icon: '🧩' },
     { id: 'danmaku', name: '全站弹幕设置', icon: '⚡' },
     { id: 'comment', name: '评论系统配置', icon: '💬' },
-    { id: 'aicat', name: 'AI 煤球配置', icon: '🐾' }, // 👈 新增的小猫设置
     { id: 'repo', name: '项目仓库设置', icon: '🚀' },
   ];
 
@@ -233,9 +261,6 @@ function SettingsContent() {
               {activeTab === 'footer' && <FooterSection key="footer" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
               {activeTab === 'danmaku' && <DanmakuSection key="danmaku" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
               {activeTab === 'comment' && <CommentSection key="comment" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
-              {/* 👇 🌟 挂载 AI 猫咪面板 */}
-              {activeTab === 'aicat' && <AICatSection key="aicat" formData={formData} handleUpdate={handleUpdate} pushToQueue={pushToQueue} />}
-
               {activeTab === 'repo' && <RepoSection key="repo" />}
             </AnimatePresence>
           </div>

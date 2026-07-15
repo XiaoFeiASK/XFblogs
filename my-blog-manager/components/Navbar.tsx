@@ -9,6 +9,40 @@ import { useToast } from './ToastProvider';
 import { AlertTriangle } from 'lucide-react';
 import { siteConfig } from '../siteConfig';
 
+type BackendConfig = {
+  api_port: string | number;
+};
+
+type DeployConfigResponse = {
+  blogPath?: string;
+};
+
+type ApiResult = {
+  success?: boolean;
+  message?: string;
+};
+
+type PywebviewApi = {
+  minimize_window?: () => void;
+  maximize_window?: () => void;
+  close_window?: () => void;
+};
+
+type PywebviewWindow = Window & {
+  pywebview?: {
+    api?: PywebviewApi;
+  };
+};
+
+const getPywebviewApi = () => {
+  if (typeof window === 'undefined') return undefined;
+  return (window as PywebviewWindow).pywebview?.api;
+};
+
+const getErrorMessage = (error: unknown) => {
+  return error instanceof Error ? error.message : String(error);
+};
+
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -25,16 +59,16 @@ export default function Navbar() {
     const fetchPath = async () => {
       try {
         const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-        const config = await configRes.json();
+        const config = await configRes.json() as BackendConfig;
         const res = await fetch(`http://127.0.0.1:${config.api_port}/api/deploy/config`);
         if (res.ok) {
-          const data = await res.json();
+          const data = await res.json() as DeployConfigResponse;
           if (data.blogPath) {
             setTargetBlogPath(data.blogPath);
             localStorage.setItem('targetBlogPath', data.blogPath);
           }
         }
-      } catch (e) {
+      } catch {
         const path = localStorage.getItem('targetBlogPath') || "F:/Projects/my-blog";
         setTargetBlogPath(path);
       }
@@ -53,7 +87,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // 🌟 这里新增了 /tree 路由
   const navLinks = [
     { name: '首页', href: '/' },
     { name: '项目', href: '/projects' },
@@ -62,7 +95,6 @@ export default function Navbar() {
     { name: '音乐', href: '/music' },
     { name: '说说', href: '/moments' },
     { name: '杂谈', href: '/chatter' },
-    { name: '🌳 灵境', href: '/tree' }, // <--- 新增的入口在这里喵！
     { name: '📝 草稿箱', href: '/drafts' },
     { name: '友链', href: '/friends' },
     { name: '关于', href: '/about' },
@@ -70,19 +102,13 @@ export default function Navbar() {
   ];
 
   const handleMinimize = () => {
-    if (typeof window !== 'undefined' && (window as any).pywebview?.api) {
-      (window as any).pywebview.api.minimize_window();
-    }
+    getPywebviewApi()?.minimize_window?.();
   };
   const handleMaximize = () => {
-    if (typeof window !== 'undefined' && (window as any).pywebview?.api) {
-      (window as any).pywebview.api.maximize_window();
-    }
+    getPywebviewApi()?.maximize_window?.();
   };
   const handleClose = () => {
-    if (typeof window !== 'undefined' && (window as any).pywebview?.api) {
-      (window as any).pywebview.api.close_window();
-    }
+    getPywebviewApi()?.close_window?.();
   };
 
   // 🌟 监控增强版更新逻辑
@@ -96,12 +122,12 @@ export default function Navbar() {
         showToast(`🔍 正在准备发送 ${operations.length} 个任务...`, "info");
 
         const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-        const configData = await configRes.json();
+        const configData = await configRes.json() as BackendConfig;
         const apiBase = `http://127.0.0.1:${configData.api_port}`;
 
         for (const op of operations) {
           let apiUrl = '';
-          let body = {};
+          let body: unknown = {};
 
           switch (op.type) {
             case 'sync_photowall':
@@ -138,7 +164,7 @@ export default function Navbar() {
             body: JSON.stringify(body)
           });
 
-          const data = await res.json();
+          const data = await res.json() as ApiResult;
           if (!data.success) {
             showToast(`❌ 任务执行失败: ${data.message}`, "error");
             return;
@@ -153,8 +179,8 @@ export default function Navbar() {
           window.location.reload();
         }, 2000);
 
-      } catch (error: any) {
-        showToast(`后端连接异常: ${error.message}`, "error");
+      } catch (error) {
+        showToast(`后端连接异常: ${getErrorMessage(error)}`, "error");
       }
     };
 
@@ -172,7 +198,7 @@ export default function Navbar() {
 
     try {
       const configRes = await fetch(`/backend_config.json?t=${Date.now()}`);
-      const configData = await configRes.json();
+      const configData = await configRes.json() as BackendConfig;
       showToast("🚀 正在镜像数据至目标项目，请稍候...", "info");
 
       const res = await fetch(`http://127.0.0.1:${configData.api_port}/api/sync/execute`, {
@@ -181,13 +207,13 @@ export default function Navbar() {
         body: JSON.stringify({ blogPath: targetBlogPath })
       });
 
-      const data = await res.json();
+      const data = await res.json() as ApiResult;
       if (data.success) {
         showToast(data.message, "success");
       } else {
         showToast(`❌ 同步失败: ${data.message}`, "error");
       }
-    } catch (error) {
+    } catch {
       showToast("无法连接到 Python 桌面核心引擎进行同步", "error");
     }
   };
