@@ -5,7 +5,29 @@ import { motion } from 'framer-motion';
 // 🌟 引入你的图床工具组件 (请根据你实际的文件夹层级调整相对路径)
 import FloatingImageTool from '../editor/FloatingImageTool';
 
-export default function ProfileSection({ formData, handleUpdate, pushToQueue }: any) {
+type SocialLinks = Record<string, string | undefined>;
+
+type ProfileFormData = {
+  title?: string;
+  faviconUrl?: string;
+  authorName?: string;
+  bio?: string;
+  navTitle?: string;
+  navSuffix?: string;
+  navAfter?: string;
+  avatarUrl?: string;
+  friendLinkApplyFormat?: string;
+  enableLevelSystem?: boolean;
+  social?: SocialLinks;
+};
+
+type ProfileSectionProps = {
+  formData?: ProfileFormData;
+  handleUpdate: (field: string, value: unknown) => void;
+  pushToQueue: (label: string) => void;
+};
+
+export default function ProfileSection({ formData, handleUpdate, pushToQueue }: ProfileSectionProps) {
   // 🌟 终极防崩溃兜底
   const safeData = formData || {};
   const safeSocial = safeData.social || {};
@@ -126,8 +148,8 @@ export default function ProfileSection({ formData, handleUpdate, pushToQueue }: 
                   <input type="text" value={safeSocial.email || ''} onChange={e => handleSocialUpdate('email', e.target.value)} className="w-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm mt-1 outline-none" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Google 邮箱/链接</label>
-                  <input type="text" value={safeSocial.google || ''} onChange={e => handleSocialUpdate('google', e.target.value)} className="w-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm mt-1 outline-none" />
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">CSDN 博客链接</label>
+                  <input type="text" value={safeSocial.csdn || safeSocial.google || ''} onChange={e => handleSocialUpdate('csdn', e.target.value)} className="w-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm mt-1 outline-none" />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-1">微信 ID</label>
