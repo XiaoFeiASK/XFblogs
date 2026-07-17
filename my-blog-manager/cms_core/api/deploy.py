@@ -231,6 +231,27 @@ def is_no_commit_needed(output):
     )
 
 
+def get_local_head(repo_path, env):
+    process = run_git(["git", "rev-parse", "HEAD"], repo_path, env)
+    if process.returncode != 0:
+        return None, command_output(process)
+    return process.stdout.strip(), ""
+
+
+def get_remote_head(repo_path, repo_url, branch, env):
+    ref = f"refs/heads/{branch}"
+    process = run_git(["git", "ls-remote", repo_url, ref], repo_path, env)
+    if process.returncode != 0:
+        return None, command_output(process)
+
+    for line in process.stdout.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[1] == ref:
+            return parts[0], ""
+
+    return None, f"GitHub 上未找到目标分支 {branch}。"
+
+
 # ☁️ B 线接口：同步源代码到 Vercel 仓库 (全新核心功能)
 # ☁️ B 线接口：同步源代码到 Vercel 仓库 (全新终极强绑定机制)
 @router.post("/source")
@@ -281,6 +302,7 @@ async def sync_source_to_vercel(request: Request):
         commit_log = command_output(commit_process)
         if commit_process.returncode != 0 and not is_no_commit_needed(commit_log):
             return {"success": False, "message": f"源码提交失败:\n{commit_log}"}
+        created_commit = commit_process.returncode == 0
 
         # 3. 先拉取目标分支，避免 GitHub 上已有新提交时 push 被 rejected。
         fetch_process = run_git(["git", "fetch", source_repo, source_branch], blog_path, custom_env)
@@ -309,10 +331,50 @@ async def sync_source_to_vercel(request: Request):
 
         # 判断是否成功
         push_log = command_output(push_process)
-        if push_process.returncode != 0 and "Everything up-to-date" not in push_log:
+        if push_process.returncode != 0:
             return {"success": False, "message": f"源码同步失败:\n{push_log}"}
 
-        return {"success": True, "message": "☁️ B线: 源码已成功送达 GitHub，Vercel 构建已触发！"}
+        # Git 返回成功后再核对远端分支，避免把未实际更新 GitHub 的情况误报为成功。
+        local_head, local_error = get_local_head(blog_path, custom_env)
+        if not local_head:
+            return {"success": False, "message": f"无法读取本地提交:\n{local_error}"}
+
+        remote_head, remote_error = get_remote_head(
+            blog_path, source_repo, source_branch, custom_env
+        )
+        if not remote_head:
+            return {"success": False, "message": f"无法确认 GitHub 提交:\n{remote_error}"}
+
+        if remote_head != local_head:
+            return {
+                "success": False,
+                "message": (
+                    "Git 推送命令已结束，但 GitHub 分支未指向本地提交。\n"
+                    f"本地: {local_head[:12]}\n远端: {remote_head[:12]}"
+                )
+            }
+
+        short_head = local_head[:7]
+        if created_commit:
+            return {
+                "success": True,
+                "createdCommit": True,
+                "commit": local_head,
+                "message": (
+                    f"源码已创建提交 {short_head} 并推送到 GitHub，"
+                    "Vercel 构建已触发。"
+                )
+            }
+
+        return {
+            "success": True,
+            "createdCommit": False,
+            "commit": local_head,
+            "message": (
+                f"未检测到新的源码改动，GitHub 已是最新版本 {short_head}，"
+                "本次没有创建新提交。"
+            )
+        }
 
     except Exception as e:
         return {"success": False, "message": f"源码同步引擎异常: {str(e)}"}

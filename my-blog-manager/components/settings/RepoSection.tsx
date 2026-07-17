@@ -161,7 +161,7 @@ export default function RepoSection() {
         body: JSON.stringify({ blogPath: deployData.blogPath })
       });
       const data = await res.json();
-      if (data.success) showToast("✅ 源码上传成功！Vercel 即将开始自动构建", "success");
+      if (data.success) showToast(data.message, data.createdCommit ? "success" : "info");
       else showToast(`❌ 上传失败: ${data.message}`, "error");
     } catch (error) { showToast("源码上传请求失败", "error"); }
     setIsUploading(false);
