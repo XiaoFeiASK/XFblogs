@@ -33,7 +33,7 @@ export const siteConfig = {
   social: {
     github: "https://github.com/XiaoFeiASK",
     gitee: "https://github.com/XiaoFeiASK",
-    csdn: "https://blog.csdn.net/",
+    csdn: "https://blog.csdn.net/Xiao_FeiA?type=blog",
     email: "2017382524@qq.com",
     qq: "2017382524",
     wechat: "qq2017382524",
