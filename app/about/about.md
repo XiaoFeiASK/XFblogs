@@ -21,7 +21,8 @@ description: ''
 
 **Agent开发:**
 
-* **掌握LangChain,Langgraph,Eino,RAG,ReAct等技术栈，熟悉Agent短期记忆，长期记忆，熟悉RAG多路召回（向量检索，BM25，Neo4j graph Rag）+RRF融合排序，RAG评测**
+* **掌握LangChain,Langgraph,Eino,RAG,ReAct等技术栈，熟悉Agent短期记忆，长期记忆，熟悉RAG多路召回（向量检索，BM25，Neo4j graph Rag）+RRF融合排序，RAG评测，**
 * **沙箱**
+* **harness**
 
 **欢迎各位朋友联系交流~**
