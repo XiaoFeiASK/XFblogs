@@ -19,6 +19,8 @@ Apache Dubbo-Go
 
 Apache Seata-Go
 
+（Pr记录详情请见归档-pr）
+
 **💻 软件工程能力**
 
 **后端开发:**
