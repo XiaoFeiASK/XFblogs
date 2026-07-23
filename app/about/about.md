@@ -13,6 +13,12 @@ description: ''
 
 专注于**后端与Agent/大模型应用开发**。
 
+活跃于开源社区：
+
+Apache Dubbo-Go
+
+Apache Seata-Go
+
 **💻 软件工程能力**
 
 **后端开发:**
