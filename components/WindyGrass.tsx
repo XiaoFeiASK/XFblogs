@@ -10,14 +10,33 @@ export default function WindyGrass() {
   const { isDark } = useTheme();
 
   useEffect(() => {
-    const generated: WildBlade[] = Array.from({ length: 150 }).map((_, i) => ({
-      id: i, height: 30 + Math.random() * 50, width: 1 + Math.random() * 2,
-      delay: Math.random() * -10, duration: 3 + Math.random() * 4,
-      opacity: 0.2 + Math.random() * 0.4,
-      left: `${(i / 150) * 100 + (Math.random() - 0.5) * 0.5}%`,
-      isLeftCurve: Math.random() > 0.5
-    }));
-    setBlades(generated);
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const generate = () => {
+      if (document.visibilityState === 'hidden' || mediaQuery.matches) {
+        setBlades([]);
+        return;
+      }
+
+      const count = window.innerWidth < 768 ? 48 : 90;
+      const generated: WildBlade[] = Array.from({ length: count }).map((_, i) => ({
+        id: i, height: 30 + Math.random() * 50, width: 1 + Math.random() * 2,
+        delay: Math.random() * -10, duration: 3 + Math.random() * 4,
+        opacity: 0.2 + Math.random() * 0.4,
+        left: `${(i / count) * 100 + (Math.random() - 0.5) * 0.5}%`,
+        isLeftCurve: Math.random() > 0.5
+      }));
+      setBlades(generated);
+    };
+
+    generate();
+    document.addEventListener('visibilitychange', generate);
+    window.addEventListener('resize', generate);
+    mediaQuery.addEventListener('change', generate);
+    return () => {
+      document.removeEventListener('visibilitychange', generate);
+      window.removeEventListener('resize', generate);
+      mediaQuery.removeEventListener('change', generate);
+    };
   }, []);
 
   return (
