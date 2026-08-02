@@ -1,6 +1,7 @@
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import { siteConfig } from '../../siteConfig';
+import { openSourceConfig, openSourceProjects, OpenSourceEntry } from '../../data/opensource';
 
 type GithubSearchItem = {
   id: number;
@@ -18,7 +19,7 @@ type GithubSearchItem = {
 
 type OpenSourceItem = {
   id: number;
-  number: number;
+  number: number | string;
   title: string;
   url: string;
   state: string;
@@ -38,14 +39,14 @@ type RepoGroup = {
 };
 
 export const metadata = {
-  title: `开源贡献 | ${siteConfig.title}`,
-  description: '按项目整理的 Issue 与 Pull Request 记录',
+  title: `${openSourceConfig.title} | ${siteConfig.title}`,
+  description: openSourceConfig.description,
 };
 
 const getGithubUser = () => {
   const githubUrl = siteConfig.social.github;
   const matched = githubUrl.match(/github\.com\/([^/?#]+)/i);
-  return matched?.[1] || 'XiaoFeiASK';
+  return openSourceConfig.githubUser || matched?.[1] || 'XiaoFeiASK';
 };
 
 const formatDate = (date: string) => {
@@ -105,14 +106,50 @@ async function getOpenSourceGroups() {
   });
 
   const grouped = new Map<string, RepoGroup>();
+
+  openSourceProjects.forEach((project) => {
+    grouped.set(project.repo, {
+      repo: project.name || project.repo,
+      repoUrl: project.repoUrl || `https://github.com/${project.repo}`,
+      issues: [],
+      prs: [],
+    });
+  });
+
   items.forEach((item) => {
-    const group = grouped.get(item.repo) || { repo: item.repo, repoUrl: item.repoUrl, issues: [], prs: [] };
+    const projectMeta = openSourceProjects.find((project) => project.repo === item.repo);
+    const group = grouped.get(item.repo) || { repo: projectMeta?.name || item.repo, repoUrl: projectMeta?.repoUrl || item.repoUrl, issues: [], prs: [] };
     if (item.type === 'PR') group.prs.push(item);
     else group.issues.push(item);
     grouped.set(item.repo, group);
   });
 
+  openSourceProjects.forEach((project) => {
+    const group = grouped.get(project.repo);
+    if (!group) return;
+    (project.entries || []).forEach((entry: OpenSourceEntry, index: number) => {
+      const item: OpenSourceItem = {
+        id: Number(`${openSourceProjects.indexOf(project) + 1}${index + 1}`),
+        number: entry.number || index + 1,
+        title: entry.title,
+        url: entry.url,
+        state: entry.status === 'open' ? 'open' : 'closed',
+        type: entry.type,
+        isMerged: entry.status === 'merged',
+        createdAt: entry.updatedAt || '',
+        updatedAt: entry.updatedAt || '',
+        repo: project.repo,
+        repoUrl: project.repoUrl || `https://github.com/${project.repo}`,
+      };
+      if (item.type === 'PR') group.prs.push(item);
+      else group.issues.push(item);
+    });
+  });
+
   return Array.from(grouped.values()).sort((a, b) => {
+    const orderA = openSourceProjects.findIndex((project) => (project.name || project.repo) === a.repo);
+    const orderB = openSourceProjects.findIndex((project) => (project.name || project.repo) === b.repo);
+    if (orderA !== -1 || orderB !== -1) return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
     const countDiff = (b.issues.length + b.prs.length) - (a.issues.length + a.prs.length);
     return countDiff || a.repo.localeCompare(b.repo);
   });
@@ -189,10 +226,10 @@ export default async function OpenSourcePage() {
           <section className="mb-10 rounded-[40px] border border-white/40 bg-white/50 p-8 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/45 md:p-12">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="mb-3 text-xs font-black uppercase tracking-[0.35em] text-indigo-500">Open Source Log</p>
-                <h1 className="text-4xl font-black tracking-tight text-slate-950 dark:text-white md:text-6xl">开源参与记录</h1>
+                <p className="mb-3 text-xs font-black uppercase tracking-[0.35em] text-indigo-500">{openSourceConfig.badge}</p>
+                <h1 className="text-4xl font-black tracking-tight text-slate-950 dark:text-white md:text-6xl">{openSourceConfig.title}</h1>
                 <p className="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
-                  自动汇总 GitHub 公开 Issue 与 Pull Request，并按项目分类展示，方便快速跳转到对应讨论和代码变更。
+                  {openSourceConfig.description}
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-3 text-center">

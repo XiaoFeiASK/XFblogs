@@ -10,7 +10,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 type ActivityRecord = {
   id: string;
-  type: '文章' | '杂谈';
+  type: '文章';
   title: string;
   date: string;
   url: string;
@@ -117,7 +117,6 @@ export default function AboutClient({
   const getTypeColor = (type: string) => {
     switch(type) {
       case '文章': return 'text-indigo-600 dark:text-indigo-400';
-      case '杂谈': return 'text-purple-600 dark:text-purple-400';
       default: return 'text-slate-500 dark:text-slate-400';
     }
   };

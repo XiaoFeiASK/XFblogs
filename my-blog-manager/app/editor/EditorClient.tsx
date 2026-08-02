@@ -6,29 +6,25 @@ import RichTextEditor, { RichTextEditorHandle } from '../../components/editor/Ri
 import MetaMatrix from '../../components/editor/MetaMatrix';
 import FloatingImageTool from '../../components/editor/FloatingImageTool';
 
-export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: any) {
+type EditorClientProps = {
+  historyPostTags: string[];
+};
+
+export default function EditorClient({ historyPostTags }: EditorClientProps) {
   const searchParams = useSearchParams();
   const docId = searchParams.get('id') || 'new';
-  const docType = (searchParams.get('type') as 'post' | 'chatter' | 'about') || 'post';
+  const docType = (searchParams.get('type') as 'post' | 'about') || 'post';
 
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(docType === 'about' ? '关于我' : '');
   const [tags, setTags] = useState<string[]>([]);
   const [cover, setCover] = useState('');
   const [summary, setSummary] = useState('');
-  const [mood, setMood] = useState('');
   const [content, setContent] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [isImgToolOpen, setIsImgToolOpen] = useState(false);
   const editorRef = useRef<RichTextEditorHandle>(null);
-
-  // 【核心修复】：如果是 About 模式，初始化时强制锁定标题
-  useEffect(() => {
-    if (docType === 'about') {
-      setTitle('关于我');
-    }
-  }, [docType]);
 
   useEffect(() => {
     if (docId !== 'new') {
@@ -48,7 +44,6 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
             setTags(data.draft.tags || []);
             setCover(data.draft.cover || '');
             setSummary(data.draft.description || '');
-            setMood(data.draft.mood || '');
             setContent(data.draft.content || '');
           }
         } catch (e) { console.error("读取草稿失败", e); }
@@ -66,7 +61,6 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
       title: docType === 'about' ? '关于我' : title,
       tags: docType === 'about' ? [] : tags,
       cover,
-      mood: docType === 'chatter' ? mood : null,
       description: docType === 'about' ? '' : summary,
       content: editorRef.current?.getContent(),
       published: isPublish
@@ -101,10 +95,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
           tags={tags} setTags={setTags}
           cover={cover} setCover={setCover}
           summary={summary} setSummary={setSummary}
-          mood={mood} setMood={setMood}
           allHistoryPostTags={historyPostTags}
-          allHistoryChatterTags={historyChatterTags}
-          allHistoryMoods={historyMoods}
           onSave={handleSave}
           isSaving={isSaving}
           lastSaved={lastSaved}

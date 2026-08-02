@@ -6,11 +6,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import { ToastProvider, useToast } from '../../components/ToastProvider';
-import { AlertTriangle, Search, Trash2, X, Sparkles, Pencil } from 'lucide-react';
+import { AlertTriangle, Search, X, Sparkles, Pencil } from 'lucide-react';
+
+type DraftPreview = {
+  id: string;
+  title?: string;
+  type?: string;
+  lastModified: number;
+  contentPreview?: string;
+};
 
 function DraftsContent() {
   const { showToast } = useToast();
-  const [drafts, setDrafts] = useState<any[]>([]);
+  const [drafts, setDrafts] = useState<DraftPreview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -99,7 +107,7 @@ function DraftsContent() {
       <Navbar />
 
       {/* ---------------------------------------------------------
-          💎 自定义绝美确认弹窗 (与杂谈页保持高度统一)
+          💎 自定义绝美确认弹窗
       --------------------------------------------------------- */}
       <AnimatePresence>
         {deleteModal.isOpen && (
@@ -125,7 +133,7 @@ function DraftsContent() {
               <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">销毁这篇草稿？</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">
                 你正在尝试抹除未发布的草稿 <br />
-                <span className="text-red-500 font-bold">"{deleteModal.title}"</span>。<br />
+                <span className="text-red-500 font-bold">“{deleteModal.title}”</span>。<br />
                 此操作不可逆，所有未保存的灵感将永久消失。
               </p>
 
@@ -178,9 +186,6 @@ function DraftsContent() {
             <Link href="/editor?id=new&type=post" className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-indigo-500/30 transition-all active:scale-95 flex items-center gap-2">
               <Pencil size={16} /> 新建文章草稿
             </Link>
-            <Link href="/editor?id=new&type=chatter" className="px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-pink-500/30 transition-all active:scale-95 flex items-center gap-2">
-              <Sparkles size={16} /> 新建杂谈草稿
-            </Link>
           </div>
 
           {isLoading ? (
@@ -202,8 +207,8 @@ function DraftsContent() {
 
                       <div className="flex justify-between items-start mb-4 relative z-10">
                         <div className="flex items-center gap-2">
-                          <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${draft.type === 'chatter' ? 'bg-pink-500/10 text-pink-600 border-pink-500/20' : 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'}`}>
-                            {draft.type === 'chatter' ? '杂谈' : '文章'}
+                          <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border bg-indigo-500/10 text-indigo-600 border-indigo-500/20">
+                            文章
                           </span>
                           <span className="text-[10px] font-bold text-slate-400">
                             {formatDate(draft.lastModified)}
