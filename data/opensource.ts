@@ -1,6 +1,13 @@
 export type OpenSourceEntryType = 'Issue' | 'PR';
 export type OpenSourceEntryStatus = 'open' | 'closed' | 'merged' | 'unmerged';
 
+export type OpenSourceLinkedIssue = {
+  number: number | string;
+  title?: string;
+  url?: string;
+  repo?: string;
+};
+
 export type OpenSourceEntry = {
   type: OpenSourceEntryType;
   title: string;
@@ -8,6 +15,7 @@ export type OpenSourceEntry = {
   status: OpenSourceEntryStatus;
   number?: number | string;
   updatedAt?: string;
+  linkedIssue?: OpenSourceLinkedIssue;
 };
 
 export type OpenSourceProject = {
@@ -34,6 +42,39 @@ export const openSourceProjects: OpenSourceProject[] = [
     name: 'CubeSandbox',
     repoUrl: 'https://github.com/TencentCloud/CubeSandbox',
     description: '基于 RustVMM/KVM 构建的轻量级 AI Agent 沙箱服务。',
+    entries: [],
+  },
+  {
+    repo: 'apache/dubbo-go',
+    repoUrl: 'https://github.com/apache/dubbo-go',
+    entries: [
+      {
+        type: 'Issue',
+        number: 3472,
+        title: '[Feature] 泛化调用优化',
+        url: 'https://github.com/apache/dubbo-go/issues/3472',
+        status: 'open',
+        updatedAt: '2026-07-28',
+      },
+    ],
+  },
+  {
+    repo: 'apache/incubator-seata-go',
+    repoUrl: 'https://github.com/apache/incubator-seata-go',
+    entries: [
+      {
+        type: 'Issue',
+        number: 765,
+        title: 'feat: support rocketmq mode in tcc',
+        url: 'https://github.com/apache/incubator-seata-go/issues/765',
+        status: 'closed',
+        updatedAt: '2026-07-10',
+      },
+    ],
+  },
+  {
+    repo: 'oceanbase/powermem',
+    repoUrl: 'https://github.com/oceanbase/powermem',
     entries: [],
   },
 ];
