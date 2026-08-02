@@ -17,10 +17,6 @@ export const albums: Album[] = [
       {
         "url": "https://bu.dusays.com/2026/03/24/69c24230d661d.jpg",
         "caption": "青石板小路"
-      },
-      {
-        "url": "https://bu.dusays.com/2026/03/24/69c24230de927.jpg",
-        "caption": "飞檐翘角"
       }
     ]
   }
