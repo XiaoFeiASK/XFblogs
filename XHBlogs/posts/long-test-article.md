@@ -6,7 +6,7 @@ tags:
 - 深度学习
 - GROMACS
 mood: ''
-cover: https://bu.dusays.com/2026/03/24/69c1e38b4c370.jpg
+cover: https://img.cdn1.vip/i/6a6f1af4b6cdb_1785666292.webp
 description: 一篇超长的技术记录，详细阐述了我们在 STAT3/JAK2 抑制剂研发过程中，如何使用图神经网络和分子动力学进行多尺度模拟。
 ---
 
@@ -23,3 +23,5 @@ TNBC 由于缺乏雌激素受体、孕激素受体和 HER2 的表达，传统的
 在这个信号通路中，JAK2 的磷酸化会激活 STAT3，进而促使肿瘤细胞增殖。如果我们能同时抑制这两个靶点，就能形成双重打击。
 
 ## 测试用文章
+
+‍

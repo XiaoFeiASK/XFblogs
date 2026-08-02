@@ -19,6 +19,26 @@ import LatestPostsCarousel from '../components/LatestPostsCarousel';
 import LatestChatterCarousel from '../components/LatestChatterCarousel';
 import DanmakuBackground from '../components/DanmakuBackground';
 
+type HomePost = {
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  cover: string;
+  date: string;
+  formattedDate: string;
+  [key: string]: unknown;
+};
+
+type HomeChatter = {
+  slug: string;
+  title: string;
+  description: string;
+  cover: string;
+  date: string;
+  formattedDate: string;
+};
+
 function formatUpdateTime(dateString: string) {
   if (!dateString || dateString === '1970-01-01') return '刚刚更新';
   try {
@@ -36,7 +56,7 @@ function formatUpdateTime(dateString: string) {
 
 export default function Home() {
   const postsDirectory = path.join(process.cwd(), 'posts');
-  let allPosts: any[] = [];
+  let allPosts: HomePost[] = [];
   try {
     if (fs.existsSync(postsDirectory)) {
       const fileNames = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md'));
@@ -50,6 +70,7 @@ export default function Home() {
           title: data.title || '',
           description: data.description || '',
           content: content || '',
+          cover: data.cover || siteConfig.defaultPostCover,
           date: rawDate,
           formattedDate: formatUpdateTime(rawDate)
         };
@@ -61,10 +82,10 @@ export default function Home() {
       });
     }
   } catch (e) {}
-  const top5Posts = allPosts.length > 0 ? allPosts.slice(0, 5) : [{ slug: 'none', title: '暂无文章', description: '快去写第一篇吧！', cover: siteConfig.defaultPostCover, date: '', formattedDate: '' }];
+  const top5Posts = allPosts.length > 0 ? allPosts.slice(0, 5) : [{ slug: 'none', title: '暂无文章', description: '快去写第一篇吧！', content: '', cover: siteConfig.defaultPostCover, date: '', formattedDate: '' }];
 
   const chattersDirectory = path.join(process.cwd(), 'chatters');
-  let allChatters: any[] = [];
+  let allChatters: HomeChatter[] = [];
   try {
     if (fs.existsSync(chattersDirectory)) {
       const chatterFiles = fs.readdirSync(chattersDirectory).filter(f => f.endsWith('.md'));
@@ -114,7 +135,7 @@ export default function Home() {
               {/* 歌词栏 */}
               <div className="w-full mt-[-10px]"><LyricBar/></div>
 
-              {/* 第二行：文章轮播 + 照片墙 + 说说 + 主题切换 */}
+              {/* 第二行：文章轮播 + 照片墙 + 杂谈 + 主题切换 */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
 
                 {/* 左侧：文章轮播 (电脑端占4列，手机端排最上面) */}
@@ -135,7 +156,7 @@ export default function Home() {
                     </div>
                   </Link>
 
-                  {/* 底层网格：说说轮播 + 主题切换器 */}
+                  {/* 底层网格：杂谈轮播 + 主题切换器 */}
                   {/* 手机上单列，平板上分3列比例分布 */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full flex-1">
                     <div className="sm:col-span-2 flex flex-col min-h-[200px]">

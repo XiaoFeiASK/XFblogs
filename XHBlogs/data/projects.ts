@@ -9,4 +9,27 @@ export type Project = {
   tags: string[];
 };
 
-export const projectsData: Project[] = [];
+export const projectsData: Project[] = [
+  {
+    "id": "proj_1785659831031",
+    "name": "CubeSandBox",
+    "githubUrl": "https://github.com/TencentCloud/CubeSandbox",
+    "description": "Github：https://github.com/TencentCloud/CubeSandbox，基于 RustVMM/KVM 构建的轻量级 AI Agent 沙箱服务",
+    "icon": "🐧",
+    "tags": [
+      "Rust",
+      "golang",
+      "Typescript",
+      "python",
+      "shell"
+    ]
+  },
+  {
+    "id": "proj_1785660095543",
+    "name": "A",
+    "githubUrl": "啊",
+    "description": "暂无描述。",
+    "icon": "🌏",
+    "tags": []
+  }
+];

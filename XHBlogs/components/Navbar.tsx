@@ -86,12 +86,12 @@ export default function Navbar() {
             <span className="text-indigo-500 mx-1">{siteConfig.navSuffix || 'の'}</span>
             {siteConfig.navAfter || '宝藏之地'}
           </Link>
-          <nav className="flex gap-8 text-sm font-bold">
+          <nav className="flex gap-1 lg:gap-2 text-[15px] lg:text-base font-extrabold">
             {/* PC端依然使用全量的 navLinks */}
             {navLinks.map((link) => {
               const isActive = pathname === link.href || pathname === `${link.href}/`;
               return (
-                <Link key={link.href} href={link.href} className={`relative py-1 transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200 hover:text-indigo-600'}`}>
+                <Link key={link.href} href={link.href} className={`relative px-2.5 lg:px-3 py-2 rounded-full transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/70 hover:shadow-[0_8px_22px_rgba(99,102,241,0.18)] dark:hover:bg-white/10 ${isActive ? 'text-indigo-600 dark:text-indigo-400 bg-white/60 dark:bg-white/10 shadow-[0_8px_22px_rgba(99,102,241,0.14)]' : 'text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-300'}`}>
                   {link.name}
                   {isActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full animate-pulse"></span>}
                 </Link>

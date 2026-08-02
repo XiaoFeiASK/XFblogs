@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { siteConfig } from '../../siteConfig';
@@ -17,6 +17,7 @@ type Chatter = {
 export default function ChatterBoard({ chatters }: { chatters: Chatter[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTag, setActiveTag] = useState("全部");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -24,17 +25,21 @@ export default function ChatterBoard({ chatters }: { chatters: Chatter[] }) {
     return ["全部", ...Array.from(tags)];
   }, [chatters]);
 
-  const filteredChatters = useMemo(() => {
-    if (searchQuery.length > 0 && searchQuery.trim() === "") return [];
-    const query = searchQuery.trim().toLowerCase();
+  const indexedChatters = useMemo(() => chatters.map(chatter => ({
+    chatter,
+    searchText: `${chatter.title} ${chatter.content}`.toLowerCase(),
+  })), [chatters]);
 
-    return chatters.filter(chatter => {
-      const matchSearch = chatter.title.toLowerCase().includes(query) ||
-                          chatter.content.toLowerCase().includes(query);
+  const filteredChatters = useMemo(() => {
+    const query = deferredSearchQuery.trim().toLowerCase();
+    if (deferredSearchQuery.length > 0 && query === "") return [];
+
+    return indexedChatters.filter(({ chatter, searchText }) => {
+      const matchSearch = !query || searchText.includes(query);
       const matchTag = activeTag === "全部" || chatter.tags?.includes(activeTag);
       return matchSearch && matchTag;
-    });
-  }, [chatters, searchQuery, activeTag]);
+    }).map(({ chatter }) => chatter);
+  }, [indexedChatters, deferredSearchQuery, activeTag]);
 
   return (
     // 🌟 核心修改：缩紧整体容器的左右边距 px-3 md:px-10
@@ -81,14 +86,14 @@ export default function ChatterBoard({ chatters }: { chatters: Chatter[] }) {
       </div>
 
       {/* 🌟 核心修改 1：瀑布流直接设定为 columns-2，减小间距 gap-3 */}
-      <motion.div layout className="columns-2 lg:columns-3 gap-3 md:gap-6 space-y-3 md:space-y-6">
-        <AnimatePresence mode='popLayout'>
+      <div className="columns-2 lg:columns-3 gap-3 md:gap-6 space-y-3 md:space-y-6">
+        <AnimatePresence initial={false}>
           {filteredChatters.map((chatter) => (
             <motion.div
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
               key={chatter.slug}
               className="break-inside-avoid"
             >
@@ -100,7 +105,7 @@ export default function ChatterBoard({ chatters }: { chatters: Chatter[] }) {
                 {chatter.cover && (
                   // 🌟 核心修改 3：图片高度自适应 h-28 -> h-52
                   <div className="w-full h-28 md:h-52 overflow-hidden relative">
-                    <img src={chatter.cover} alt="cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                    <img src={chatter.cover} alt="cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
 
                     {/* 🌟 核心修改 4：心情徽章微缩 */}
@@ -151,7 +156,7 @@ export default function ChatterBoard({ chatters }: { chatters: Chatter[] }) {
             </motion.div>
           ))}
         </AnimatePresence>
-      </motion.div>
+      </div>
     </div>
   );
 }

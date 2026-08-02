@@ -24,7 +24,7 @@ import { siteConfig } from '../../siteConfig';
 import AboutClient from '../../components/AboutClient';
 
 // 🌟 读取指定目录下的 markdown 文件，并提取属性
-function getDirActivities(dirName: string, typeLabel: '文章' | '杂谈' | '说说', linkPrefix: string) {
+function getDirActivities(dirName: string, typeLabel: '文章' | '杂谈', linkPrefix: string) {
   const dirPath = path.join(process.cwd(), dirName);
   if (!fs.existsSync(dirPath)) return [];
 
@@ -52,7 +52,8 @@ export default async function AdminAboutPage() {
   try {
     const fileContents = fs.readFileSync(fullPath, 'utf8');
     // 🌟 改为 let，以便进行文本预清洗
-    let { data, content } = matter(fileContents);
+    const { data, content: rawContent } = matter(fileContents);
+    let content = rawContent;
 
     if (data.cover) coverImage = data.cover;
 
@@ -83,7 +84,7 @@ export default async function AdminAboutPage() {
       .use(remarkMath)
       .use(remarkRehype, { allowDangerousHtml: true })
       // 🌟 核心升级：开启自动侦测，并限制白名单，大幅提高 C++ 等语言的猜中率
-      // @ts-ignore
+      // @ts-expect-error rehype-highlight accepts runtime options not covered by its public types here.
       .use(rehypeHighlight, {
         detect: true,
         ignoreMissing: true,
@@ -101,10 +102,9 @@ export default async function AdminAboutPage() {
   // 🌟 3. 获取所有的活动动态
   const posts = getDirActivities('posts', '文章', 'posts');
   const chatters = getDirActivities('chatters', '杂谈', 'chatter');
-  const moments = getDirActivities('moments', '说说', 'moments');
 
   // 将所有动态合并，并按时间倒序排列 (最新的在最上面)
-  const allActivities = [...posts, ...chatters, ...moments].sort((a, b) => {
+  const allActivities = [...posts, ...chatters].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 

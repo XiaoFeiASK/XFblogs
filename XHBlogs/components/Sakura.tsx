@@ -13,14 +13,33 @@ export default function Sakura() {
   const [petals, setPetals] = useState<Petal[]>([]);
 
   useEffect(() => {
-    const generated = Array.from({ length: 40 }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      size: 8 + Math.random() * 12, // 8px 到 20px 大小的花瓣
-      duration: 6 + Math.random() * 8, // 飘落时间 6-14 秒
-      delay: Math.random() * -15, // 随机错开下落时间
-    }));
-    setPetals(generated);
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const generate = () => {
+      if (document.visibilityState === 'hidden' || mediaQuery.matches) {
+        setPetals([]);
+        return;
+      }
+
+      const count = window.innerWidth < 768 ? 12 : 22;
+      const generated = Array.from({ length: count }).map((_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        size: 8 + Math.random() * 12, // 8px 到 20px 大小的花瓣
+        duration: 7 + Math.random() * 9, // 稍慢一点，减少同时重绘
+        delay: Math.random() * -15, // 随机错开下落时间
+      }));
+      setPetals(generated);
+    };
+
+    generate();
+    document.addEventListener('visibilitychange', generate);
+    window.addEventListener('resize', generate);
+    mediaQuery.addEventListener('change', generate);
+    return () => {
+      document.removeEventListener('visibilitychange', generate);
+      window.removeEventListener('resize', generate);
+      mediaQuery.removeEventListener('change', generate);
+    };
   }, []);
 
   return (

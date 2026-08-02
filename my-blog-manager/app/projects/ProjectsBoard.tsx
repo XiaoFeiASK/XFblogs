@@ -4,9 +4,11 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../../components/BackButton';
 import { projectsData as initialProjects, Project } from '../../data/projects';
-import { Plus, Pencil, Trash2, AlertTriangle, Save, Edit3, X, Sparkles, Code2 } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, Save, Edit3, Sparkles, Code2, ArrowUp, ArrowDown } from 'lucide-react';
 import { useOperations } from '../../context/OperationContext';
 import { useToast } from '../../components/ToastProvider';
+
+const createTimestampId = (prefix: string) => `${prefix}_${Date.now()}`;
 
 export default function ProjectsBoard() {
   const { addOperation } = useOperations();
@@ -34,7 +36,7 @@ export default function ProjectsBoard() {
   // --- 核心逻辑：加入暂存队列 ---
   const syncToQueue = (nextList: Project[]) => {
     addOperation({
-      id: `sync_projects_${Date.now()}`,
+      id: createTimestampId("sync_projects"),
       type: "sync_projects",
       label: "同步项目矩阵变更",
       value: nextList
@@ -52,7 +54,7 @@ export default function ProjectsBoard() {
     let next;
     if (mode === 'add') {
       const newProj: Project = {
-        id: `proj_${Date.now()}`,
+        id: createTimestampId("proj"),
         name: data.name!,
         githubUrl: data.githubUrl!,
         description: data.description || '暂无描述。',
@@ -76,6 +78,17 @@ export default function ProjectsBoard() {
     setDeleteModal({ isOpen: false, id: null, name: null });
   };
 
+  const handleMoveProject = (id: string, direction: -1 | 1) => {
+    const currentIndex = editableProjects.findIndex(p => p.id === id);
+    const targetIndex = currentIndex + direction;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= editableProjects.length) return;
+
+    const next = [...editableProjects];
+    [next[currentIndex], next[targetIndex]] = [next[targetIndex], next[currentIndex]];
+    setEditableProjects(next);
+    syncToQueue(next);
+  };
+
   // GitHub 原生 SVG 图标组件
   const GithubIcon = () => (
     <svg className="w-8 h-8 text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white transition-colors flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -94,7 +107,7 @@ export default function ProjectsBoard() {
             <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 p-10 text-center">
               <div className="w-16 h-16 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6"><AlertTriangle className="text-red-500" /></div>
               <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">注销项目？</h3>
-              <p className="text-sm text-slate-500 mb-8 leading-relaxed text-balance">确认从矩阵中移除 <span className="font-bold text-red-500">"{deleteModal.name}"</span> 吗？</p>
+              <p className="text-sm text-slate-500 mb-8 leading-relaxed text-balance">确认从矩阵中移除 <span className="font-bold text-red-500">“{deleteModal.name}”</span> 吗？</p>
               <div className="flex gap-3">
                 <button onClick={() => setDeleteModal({ ...deleteModal, isOpen: false })} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-xs font-black uppercase">保留</button>
                 <button onClick={confirmDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg">确认移除</button>
@@ -159,11 +172,18 @@ export default function ProjectsBoard() {
         </motion.div>
 
         <AnimatePresence mode='popLayout'>
-          {filteredProjects.map((project) => (
+          {filteredProjects.map((project) => {
+            const projectIndex = editableProjects.findIndex(p => p.id === project.id);
+            const isFirstProject = projectIndex <= 0;
+            const isLastProject = projectIndex < 0 || projectIndex >= editableProjects.length - 1;
+
+            return (
             <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} key={project.id} className="h-full relative group">
 
               {/* 👇 悬浮管理按钮 */}
               <div className="absolute top-8 right-8 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all -translate-x-4 group-hover:translate-x-0">
+                  <button disabled={isFirstProject} onClick={(e) => { e.preventDefault(); handleMoveProject(project.id, -1); }} className="w-9 h-9 rounded-xl bg-slate-900/80 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed" title="上移排序"><ArrowUp size={16}/></button>
+                  <button disabled={isLastProject} onClick={(e) => { e.preventDefault(); handleMoveProject(project.id, 1); }} className="w-9 h-9 rounded-xl bg-slate-900/80 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed" title="下移排序"><ArrowDown size={16}/></button>
                   <button onClick={(e) => { e.preventDefault(); setProjectModal({ isOpen: true, mode: 'edit', data: project }); }} className="w-9 h-9 rounded-xl bg-indigo-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"><Edit3 size={16}/></button>
                   <button onClick={(e) => { e.preventDefault(); setDeleteModal({ isOpen: true, id: project.id, name: project.name }); }} className="w-9 h-9 rounded-xl bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"><Trash2 size={16}/></button>
               </div>
@@ -192,7 +212,8 @@ export default function ProjectsBoard() {
                 </div>
               </a>
             </motion.div>
-          ))}
+            );
+          })}
         </AnimatePresence>
       </motion.div>
 
