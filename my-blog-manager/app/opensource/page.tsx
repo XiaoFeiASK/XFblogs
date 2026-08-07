@@ -74,11 +74,29 @@ const getRepoId = (repo: string) => {
   return repo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 };
 
+const repoLabelOverrides: Record<string, string> = {
+  'ob-labs/agentseek': 'Oceanbase/agentseek',
+};
+
+const ownerLabelOverrides: Record<string, string> = {
+  apache: 'Apache',
+  oceanbase: 'Oceanbase',
+  'ob-labs': 'Oceanbase',
+};
+
+const contributionTitleOverrides: Record<string, string> = {
+  'ob-labs/agentseek#166': 'Fix root CLI mode parsing\nand stabilize Windows test runs',
+};
+
 const getRepoLabel = (repo: string) => {
+  const normalizedRepo = repo.toLowerCase();
+  const repoLabelOverride = repoLabelOverrides[normalizedRepo];
+  if (repoLabelOverride) return repoLabelOverride;
+
   const [owner, name] = repo.split('/');
   if (!name) return repo;
 
-  const displayOwner = owner === 'apache' ? 'Apache' : owner === 'oceanbase' ? 'Oceanbase' : owner;
+  const displayOwner = ownerLabelOverrides[owner.toLowerCase()] || owner;
   const displayName = name.startsWith('incubator-') ? name.replace('incubator-', '') : name;
   return `${displayOwner}/${displayName}`;
 };
@@ -88,6 +106,10 @@ const getIssueUrl = (repo: string, number: number | string) => `https://github.c
 const getIssueKey = (repo: string, number: number | string) => `${repo.toLowerCase()}#${number}`;
 
 const normalizeTitle = (title: string) => title.toLowerCase().replace(/\s+/g, ' ').trim();
+
+const getContributionTitle = (item: OpenSourceItem) => {
+  return contributionTitleOverrides[getIssueKey(item.repo, item.number)] || item.title;
+};
 
 const toLinkedIssue = (issue: OpenSourceItem): LinkedIssue => ({
   number: issue.number,
@@ -342,6 +364,7 @@ const getStatusBadge = (item: OpenSourceItem) => {
 function ContributionCard({ item }: { item: OpenSourceItem }) {
   const isPr = item.type === 'PR';
   const statusBadge = getStatusBadge(item);
+  const title = getContributionTitle(item);
   return (
     <a
       href={item.url}
@@ -358,8 +381,8 @@ function ContributionCard({ item }: { item: OpenSourceItem }) {
           {statusBadge.label}
         </span>
       </div>
-      <h3 className="line-clamp-2 text-base font-black leading-snug text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-300">
-        {item.title}
+      <h3 className="line-clamp-2 whitespace-pre-line text-base font-black leading-snug text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-300">
+        {title}
       </h3>
       <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
         <span>更新 {formatDate(item.updatedAt)}</span>

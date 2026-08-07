@@ -74,11 +74,29 @@ const getRepoId = (repo: string) => {
   return repo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 };
 
+const repoLabelOverrides: Record<string, string> = {
+  'ob-labs/agentseek': 'Oceanbase/agentseek',
+};
+
+const ownerLabelOverrides: Record<string, string> = {
+  apache: 'Apache',
+  oceanbase: 'Oceanbase',
+  'ob-labs': 'Oceanbase',
+};
+
+const contributionTitleOverrides: Record<string, string> = {
+  'ob-labs/agentseek#166': 'Fix root CLI mode parsing\nand stabilize Windows test runs',
+};
+
 const getRepoLabel = (repo: string) => {
+  const normalizedRepo = repo.toLowerCase();
+  const repoLabelOverride = repoLabelOverrides[normalizedRepo];
+  if (repoLabelOverride) return repoLabelOverride;
+
   const [owner, name] = repo.split('/');
   if (!name) return repo;
 
-  const displayOwner = owner === 'apache' ? 'Apache' : owner === 'oceanbase' ? 'Oceanbase' : owner;
+  const displayOwner = ownerLabelOverrides[owner.toLowerCase()] || owner;
   const displayName = name.startsWith('incubator-') ? name.replace('incubator-', '') : name;
   return `${displayOwner}/${displayName}`;
 };
@@ -87,7 +105,13 @@ const getIssueUrl = (repo: string, number: number | string) => `https://github.c
 
 const getIssueKey = (repo: string, number: number | string) => `${repo.toLowerCase()}#${number}`;
 
+const getContributionKey = (item: OpenSourceItem) => `${item.type}-${getIssueKey(item.repo, item.number)}-${item.id}`;
+
 const normalizeTitle = (title: string) => title.toLowerCase().replace(/\s+/g, ' ').trim();
+
+const getContributionTitle = (item: OpenSourceItem) => {
+  return contributionTitleOverrides[getIssueKey(item.repo, item.number)] || item.title;
+};
 
 const toLinkedIssue = (issue: OpenSourceItem): LinkedIssue => ({
   number: issue.number,
@@ -294,10 +318,15 @@ async function getOpenSourceGroups() {
 
   grouped.forEach((group) => {
     const issuesByKey = new Map(group.issues.map((issue) => [getIssueKey(issue.repo, issue.number), issue]));
-    const pairedIssues = group.prs
-      .map((pr) => pr.linkedIssue && issuesByKey.get(getIssueKey(pr.linkedIssue.repo, pr.linkedIssue.number)))
-      .filter((issue): issue is OpenSourceItem => Boolean(issue));
-    const pairedIssueKeys = new Set(pairedIssues.map((issue) => getIssueKey(issue.repo, issue.number)));
+    const pairedIssuesByKey = new Map<string, OpenSourceItem>();
+    group.prs.forEach((pr) => {
+      if (!pr.linkedIssue) return;
+      const issueKey = getIssueKey(pr.linkedIssue.repo, pr.linkedIssue.number);
+      const issue = issuesByKey.get(issueKey);
+      if (issue) pairedIssuesByKey.set(issueKey, issue);
+    });
+    const pairedIssues = Array.from(pairedIssuesByKey.values());
+    const pairedIssueKeys = new Set(pairedIssuesByKey.keys());
     const remainingIssues = group.issues.filter((issue) => !pairedIssueKeys.has(getIssueKey(issue.repo, issue.number)));
     group.issues = [...pairedIssues, ...remainingIssues];
   });
@@ -342,6 +371,7 @@ const getStatusBadge = (item: OpenSourceItem) => {
 function ContributionCard({ item }: { item: OpenSourceItem }) {
   const isPr = item.type === 'PR';
   const statusBadge = getStatusBadge(item);
+  const title = getContributionTitle(item);
   return (
     <a
       href={item.url}
@@ -358,8 +388,8 @@ function ContributionCard({ item }: { item: OpenSourceItem }) {
           {statusBadge.label}
         </span>
       </div>
-      <h3 className="line-clamp-2 text-base font-black leading-snug text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-300">
-        {item.title}
+      <h3 className="line-clamp-2 whitespace-pre-line text-base font-black leading-snug text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-300">
+        {title}
       </h3>
       <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
         <span>更新 {formatDate(item.updatedAt)}</span>
@@ -453,7 +483,7 @@ export default async function OpenSourcePage() {
                           <span className="h-2 w-2 rounded-full bg-emerald-500"></span> Issues
                         </div>
                         <div className="space-y-3">
-                          {group.issues.length > 0 ? group.issues.map((item) => <ContributionCard key={item.id} item={item} />) : <p className="rounded-2xl bg-white/40 p-4 text-sm font-bold text-slate-500 dark:bg-white/5">暂无公开 Issue 记录</p>}
+                          {group.issues.length > 0 ? group.issues.map((item) => <ContributionCard key={getContributionKey(item)} item={item} />) : <p className="rounded-2xl bg-white/40 p-4 text-sm font-bold text-slate-500 dark:bg-white/5">暂无公开 Issue 记录</p>}
                         </div>
                       </div>
 
@@ -462,7 +492,7 @@ export default async function OpenSourcePage() {
                           <span className="h-2 w-2 rounded-full bg-purple-500"></span> Pull Requests
                         </div>
                         <div className="space-y-3">
-                          {group.prs.length > 0 ? group.prs.map((item) => <ContributionCard key={item.id} item={item} />) : <p className="rounded-2xl bg-white/40 p-4 text-sm font-bold text-slate-500 dark:bg-white/5">暂无公开 PR 记录</p>}
+                          {group.prs.length > 0 ? group.prs.map((item) => <ContributionCard key={getContributionKey(item)} item={item} />) : <p className="rounded-2xl bg-white/40 p-4 text-sm font-bold text-slate-500 dark:bg-white/5">暂无公开 PR 记录</p>}
                         </div>
                       </div>
                     </div>

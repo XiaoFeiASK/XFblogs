@@ -7,7 +7,7 @@ export const albums: Album[] = [
     "id": "history-tour",
     "title": "一位开源爱好者~",
     "description": "寻访千年前的长安与汴梁遗迹",
-    "cover": "https://img.cdn1.vip/i/6a6f14c8b6601_1785664712.webp",
+    "cover": "https://pic1.imgdb.cn/i/0341bm33E6zI0BBhPMEaVl.webp",
     "date": "2025.10",
     "photos": [
       {

@@ -33,7 +33,7 @@ export const openSourceConfig = {
   description: '记录我参与过的 Issue 与 Pull Request，并按项目分类沉淀贡献轨迹。',
   homeTitle: '开源足迹',
   homeDescription: 'Issue、PR 与项目协作记录，按仓库分类整理。',
-  homeCover: 'https://img.cdn1.vip/i/6a6f7a31273c5_1785690673.webp',
+  homeCover: 'https://pic1.imgdb.cn/i/0341bm3arBj9fTTDpBFhoz.webp',
 };
 
 export const openSourceProjects: OpenSourceProject[] = [
@@ -71,6 +71,11 @@ export const openSourceProjects: OpenSourceProject[] = [
         updatedAt: '2026-07-10',
       },
     ],
+  },
+  {
+    repo: 'ob-labs/agentseek',
+    repoUrl: 'https://github.com/ob-labs/agentseek',
+    entries: [],
   },
   {
     repo: 'oceanbase/powermem',

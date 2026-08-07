@@ -3,8 +3,7 @@ title: Leetcode一百题重刷——两数之和
 date: '2026-03-26 07:00:00'
 tags:
 - leetcode
-mood: ''
-cover: https://img.cdn1.vip/i/6a6f1af4b6cdb_1785666292.webp
+cover: https://pic1.imgdb.cn/i/0341bm2vKSqQQ1tePnx75y.webp
 description: 一篇简单的算法记录，记录了关于leecode hot100开篇之经典！拉开了无数人算法之程的序幕！
 ---
 
