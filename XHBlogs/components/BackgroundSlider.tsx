@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { siteConfig } from '../siteConfig';
 
+const ACTIVE_IMAGE_OPACITY = 0.78;
+
 export default function BackgroundSlider() {
   const [index, setIndex] = useState(0);
   const images = siteConfig.bgImages;
@@ -26,8 +28,8 @@ export default function BackgroundSlider() {
             backgroundImage: `url(${img})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            // 当前显示的图片 opacity 为 1，其他的为 0
-            opacity: i === index ? 1 : 0,
+            // 当前显示的图片降低一点不透明度，避免压过前景卡片
+            opacity: i === index ? ACTIVE_IMAGE_OPACITY : 0,
             // 解决层级重叠导致的渲染压力
             visibility: Math.abs(i - index) <= 1 || (i === images.length - 1 && index === 0) ? 'visible' : 'hidden'
           }}

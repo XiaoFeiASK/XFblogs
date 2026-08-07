@@ -221,9 +221,9 @@ export default function Navbar() {
   return (
     <>
       <header className={`w-full fixed top-0 left-0 right-0 z-[100] transition-all duration-500 border-b ${showNav ? 'translate-y-0' : '-translate-y-full'} bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border-white/20 dark:border-white/5 shadow-sm pywebview-drag-region`}>
-        <div className="w-[95%] max-w-7xl mx-auto h-16 flex items-center justify-between px-4 box-border">
+        <div className="w-[95%] max-w-7xl mx-auto h-[72px] flex items-center justify-between px-4 box-border">
 
-          <Link href="/" className="text-xl font-black text-slate-800 dark:text-white tracking-tighter">
+          <Link href="/" className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-300">
             {siteConfig.navTitle}
             <span className="text-indigo-500 mx-1">
               {siteConfig.navSuffix || 'の'}
@@ -232,12 +232,15 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center gap-6" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-            <nav className="hidden lg:flex gap-8 text-sm font-bold">
-              {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`relative py-1 transition-colors ${pathname === link.href ? 'text-indigo-600' : 'text-slate-700 dark:text-slate-200'}`}>
-                  {link.name}
-                </Link>
-              ))}
+            <nav className="hidden lg:flex gap-1 xl:gap-2 text-[15px] xl:text-base 2xl:text-[17px] font-extrabold tracking-wide">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href || pathname === `${link.href}/`;
+                return (
+                  <Link key={link.href} href={link.href} className={`relative px-2 xl:px-3 2xl:px-3.5 py-2 rounded-full transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/75 hover:text-indigo-600 hover:shadow-[0_8px_22px_rgba(99,102,241,0.18)] dark:hover:bg-white/10 dark:hover:text-indigo-300 ${isActive ? 'text-indigo-600 dark:text-indigo-400 bg-white/65 dark:bg-white/10 shadow-[0_8px_22px_rgba(99,102,241,0.14)]' : 'text-slate-700 dark:text-slate-200'}`}>
+                    {link.name}
+                  </Link>
+                );
+              })}
             </nav>
 
             <div className="relative">

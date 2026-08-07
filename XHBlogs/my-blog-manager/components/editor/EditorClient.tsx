@@ -6,18 +6,21 @@ import RichTextEditor, { RichTextEditorHandle } from '../../components/editor/Ri
 import MetaMatrix from '../../components/editor/MetaMatrix';
 import FloatingImageTool from '../../components/editor/FloatingImageTool';
 
-export default function EditorClient({ historyPostTags, historyChatterTags, historyMoods }: any) {
+type EditorClientProps = {
+  historyPostTags: string[];
+};
+
+export default function EditorClient({ historyPostTags }: EditorClientProps) {
   const searchParams = useSearchParams();
 
   // 使用 state 追踪当前文档 ID，以便新建草稿保存后更新 ID
   const [currentDocId, setCurrentDocId] = useState(searchParams.get('id') || 'new');
-  const docType = (searchParams.get('type') as 'post' | 'chatter' | 'about') || 'post';
+  const docType = (searchParams.get('type') as 'post' | 'about') || 'post';
 
   const [title, setTitle] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [cover, setCover] = useState('');
   const [summary, setSummary] = useState('');
-  const [mood, setMood] = useState('');
   const [content, setContent] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
@@ -52,7 +55,6 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
             setTags(data.draft.tags || []);
             setCover(data.draft.cover || '');
             setSummary(data.draft.description || '');
-            setMood(data.draft.mood || '');
             setContent(data.draft.content || '');
           }
         } catch (e) { console.error("读取草稿失败", e); }
@@ -77,7 +79,6 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
       title: docType === 'about' ? '关于我' : title,
       tags: docType === 'about' ? [] : tags,
       cover,
-      mood: docType === 'chatter' ? mood : null,
       description: docType === 'about' ? '' : summary,
       content: editorRef.current?.getContent() || '',
       published: isPublish
@@ -140,10 +141,7 @@ export default function EditorClient({ historyPostTags, historyChatterTags, hist
           tags={tags} setTags={setTags}
           cover={cover} setCover={setCover}
           summary={summary} setSummary={setSummary}
-          mood={mood} setMood={setMood}
           allHistoryPostTags={historyPostTags}
-          allHistoryChatterTags={historyChatterTags}
-          allHistoryMoods={historyMoods}
           onSave={handleSave}
           isSaving={isSaving}
           lastSaved={lastSaved}

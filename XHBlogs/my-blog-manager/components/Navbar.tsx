@@ -93,8 +93,7 @@ export default function Navbar() {
     { name: '归档', href: '/timeline' },
     { name: '照片墙', href: '/photowall' },
     { name: '音乐', href: '/music' },
-    { name: '说说', href: '/moments' },
-    { name: '杂谈', href: '/chatter' },
+    { name: '开源', href: '/opensource' },
     { name: '📝 草稿箱', href: '/drafts' },
     { name: '友链', href: '/friends' },
     { name: '关于', href: '/about' },
@@ -145,10 +144,6 @@ export default function Navbar() {
             case 'CONFIG':
               apiUrl = `${apiBase}/api/config/update`;
               body = { updates: op.payload };
-              break;
-            case 'create_moment':
-              apiUrl = `${apiBase}/api/moments/save`;
-              body = op.payload;
               break;
             default:
               apiUrl = `${apiBase}/api/drafts/sync_local`;

@@ -18,21 +18,37 @@ export default function DanmakuBackground() {
     const list = siteConfig.danmakuList || [];
     if (list.length === 0) return;
 
-    const generatedDanmakus: DanmakuItem[] = [];
-    const count = 15;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const generate = () => {
+      if (document.visibilityState === 'hidden' || mediaQuery.matches) {
+        setDanmakus([]);
+        return;
+      }
 
-    for (let i = 0; i < count; i++) {
-      generatedDanmakus.push({
-        id: i,
-        text: list[Math.floor(Math.random() * list.length)],
-        // 现在容器本身只有 30vh 高，这里的 0-100% 就是在这个 30vh 内部随机
-        // 我们留一点边距 10-90，防止字被切掉一半
-        top: Math.random() * 80 + 10,
-        duration: Math.random() * 20 + 25,
-        delay: Math.random() * 20,
-      });
-    }
-    setDanmakus(generatedDanmakus);
+      const generatedDanmakus: DanmakuItem[] = [];
+      const count = window.innerWidth < 768 ? 6 : 10;
+
+      for (let i = 0; i < count; i++) {
+        generatedDanmakus.push({
+          id: i,
+          text: list[Math.floor(Math.random() * list.length)],
+          top: Math.random() * 80 + 10,
+          duration: Math.random() * 20 + 25,
+          delay: Math.random() * 20,
+        });
+      }
+      setDanmakus(generatedDanmakus);
+    };
+
+    generate();
+    document.addEventListener('visibilitychange', generate);
+    window.addEventListener('resize', generate);
+    mediaQuery.addEventListener('change', generate);
+    return () => {
+      document.removeEventListener('visibilitychange', generate);
+      window.removeEventListener('resize', generate);
+      mediaQuery.removeEventListener('change', generate);
+    };
   }, []);
 
   return (
@@ -45,7 +61,7 @@ export default function DanmakuBackground() {
           className="absolute whitespace-nowrap text-white/30 dark:text-white/10 font-bold text-lg tracking-wider select-none"
           style={{
             top: `${item.top}%`,
-            right: '-100%',
+            left: '100%',
             animation: `float-left ${item.duration}s linear ${item.delay}s infinite`,
           }}
         >
@@ -57,12 +73,10 @@ export default function DanmakuBackground() {
         __html: `
         @keyframes float-left {
           0% {
-            right: -100%;
-            transform: translateX(100%);
+            transform: translateX(0);
           }
           100% {
-            right: 100%;
-            transform: translateX(-100%);
+            transform: translateX(calc(-100vw - 100%));
           }
         }
       `}} />

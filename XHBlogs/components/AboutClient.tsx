@@ -10,7 +10,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 type ActivityRecord = {
   id: string;
-  type: '文章' | '杂谈' | '说说';
+  type: '文章';
   title: string;
   date: string;
   url: string;
@@ -80,7 +80,7 @@ export default function AboutClient({
     startDate.setDate(endDate.getDate() - 364);
     startDate.setDate(startDate.getDate() - startDate.getDay());
 
-    let curr = new Date(startDate);
+    const curr = new Date(startDate);
     const weeksArr = [];
     let currentWeek = [];
 
@@ -117,8 +117,6 @@ export default function AboutClient({
   const getTypeColor = (type: string) => {
     switch(type) {
       case '文章': return 'text-indigo-600 dark:text-indigo-400';
-      case '杂谈': return 'text-purple-600 dark:text-purple-400';
-      case '说说': return 'text-pink-600 dark:text-pink-400';
       default: return 'text-slate-500 dark:text-slate-400';
     }
   };
@@ -140,7 +138,7 @@ export default function AboutClient({
         <div className="mt-4 md:mt-6 mb-6 md:mb-8 relative flex flex-col md:flex-row md:items-end justify-between gap-5 md:gap-4">
           <div className="text-center md:text-left">
             <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-1 md:mb-3 transition-colors duration-700">关于我</h1>
-            <p className="text-sm md:text-lg text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase transition-colors duration-700">Hello World, I'm {siteConfig.authorName}</p>
+            <p className="text-sm md:text-lg text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase transition-colors duration-700">Hello World, I&apos;m {siteConfig.authorName}</p>
           </div>
 
           <div className="flex items-center w-full md:w-auto gap-1 bg-white/50 dark:bg-slate-900/50 p-1 md:p-1.5 rounded-xl md:rounded-2xl shadow-inner border border-white/40 dark:border-white/5">
@@ -296,15 +294,12 @@ export default function AboutClient({
 
               <div className="relative pl-6 md:pl-8 border-l-2 border-indigo-500/20 dark:border-indigo-400/20 space-y-6 md:space-y-8">
                 {activities.map((act, index) => {
-                  const isMoment = act.type === '说说';
-                  const targetUrl = isMoment ? '/moments' : act.url;
-
                   return (
                     <div key={index} className="relative group">
                       <div className="absolute -left-[31px] md:-left-[39px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 bg-white dark:bg-slate-800 border-2 border-indigo-500 rounded-full group-hover:scale-125 transition-transform duration-300 z-10"></div>
 
                       <Link
-                        href={targetUrl}
+                        href={act.url}
                         className="flex flex-col md:flex-row md:items-center gap-3 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md p-4 rounded-2xl border border-white/50 dark:border-white/5 shadow-sm hover:shadow-lg transition-all group-hover:-translate-y-1 cursor-pointer block relative overflow-hidden"
                       >
                         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -314,7 +309,7 @@ export default function AboutClient({
                             <div className="flex items-center gap-2">
                               <span className="font-black text-slate-800 dark:text-slate-200 text-sm">{siteConfig.authorName}</span>
                               <span className={`text-xs font-bold ${getTypeColor(act.type)}`}>
-                                {isMoment ? '发布了 说说' : `更新了 ${act.type}`}
+                                更新了 {act.type}
                               </span>
                             </div>
 
@@ -324,20 +319,12 @@ export default function AboutClient({
                           </div>
                         </div>
 
-                        {!isMoment && (
-                          <>
-                            <div className="hidden md:block w-px h-8 bg-slate-300 dark:bg-slate-600 mx-2 shrink-0"></div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm md:text-base font-black text-slate-800 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                《{act.title}》
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {isMoment && (
-                          <div className="flex-1 hidden md:block"></div>
-                        )}
+                        <div className="hidden md:block w-px h-8 bg-slate-300 dark:bg-slate-600 mx-2 shrink-0"></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm md:text-base font-black text-slate-800 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            《{act.title}》
+                          </div>
+                        </div>
 
                         <div className="hidden md:block text-[11px] font-mono text-slate-400 shrink-0 ml-auto bg-slate-100 dark:bg-slate-900/50 px-2 py-1 rounded-md">
                           {formatDateTime(act.date)}

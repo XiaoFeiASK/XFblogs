@@ -1,30 +1,36 @@
 "use client";
 
 import React, { useState, KeyboardEvent } from 'react';
-import { ImageIcon, Tag, FileText, X, Clock, CloudUpload, Smile, Save, Send } from 'lucide-react';
+import { ImageIcon, Tag, FileText, X, Clock, CloudUpload, Save, Send, LucideIcon } from 'lucide-react';
 
 interface Props {
-  type: 'post' | 'chatter' | 'about';
+  type: 'post' | 'about';
   tags: string[]; setTags: React.Dispatch<React.SetStateAction<string[]>>;
   cover: string; setCover: (val: string) => void;
   summary: string; setSummary: (val: string) => void;
-  mood?: string; setMood?: (val: string) => void;
   allHistoryPostTags: string[];
-  allHistoryChatterTags: string[];
   isLoadingTags: boolean;
-  allHistoryMoods: string[];
   onSave: (isPublish: boolean) => void;
   isSaving: boolean;
   lastSaved: string | null;
   onOpenImageTool: () => void;
 }
 
+function MetaLabel({ icon: Icon, text, color }: { icon: LucideIcon; text: string; color: string }) {
+  return (
+    <div className={`flex items-center gap-2 mb-3 border-l-4 ${color} pl-4`}>
+      <Icon size={14} className="text-slate-400" />
+      <span className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">{text}</span>
+    </div>
+  );
+}
+
 export default function MetaMatrix({
-  type, tags, setTags, cover, setCover, summary, setSummary, mood, setMood,
-  allHistoryPostTags, allHistoryChatterTags, isLoadingTags, allHistoryMoods, onSave, isSaving, lastSaved, onOpenImageTool
+  type, tags, setTags, cover, setCover, summary, setSummary,
+  allHistoryPostTags, isLoadingTags, onSave, isSaving, lastSaved, onOpenImageTool
 }: Props) {
   const [tagInput, setTagInput] = useState('');
-  const currentHistoryTags = type === 'chatter' ? allHistoryChatterTags : allHistoryPostTags;
+  const currentHistoryTags = allHistoryPostTags;
 
   const handleAddTag = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim() !== '') {
@@ -33,13 +39,6 @@ export default function MetaMatrix({
       setTagInput('');
     }
   };
-
-  const Label = ({ icon: Icon, text, color }: any) => (
-    <div className={`flex items-center gap-2 mb-3 border-l-4 ${color} pl-4`}>
-      <Icon size={14} className="text-slate-400" />
-      <span className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">{text}</span>
-    </div>
-  );
 
   return (
     <div className="flex flex-col h-full overflow-hidden relative">
@@ -53,10 +52,10 @@ export default function MetaMatrix({
 
         {/* 1. 封面图区 */}
         <div className="flex flex-col">
-          <Label icon={ImageIcon} text="Cover Image" color="border-indigo-500" />
+          <MetaLabel icon={ImageIcon} text="Cover Image" color="border-indigo-500" />
           <div onClick={onOpenImageTool} className="w-full aspect-video bg-black/10 dark:bg-black/40 rounded-[32px] border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden mb-4 group relative cursor-pointer shadow-inner transition-all">
             {cover ? (
-              <img src={cover} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              <img src={cover} alt="cover preview" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
             ) : (
               <div className="flex flex-col items-center gap-2 text-slate-400">
                 <CloudUpload size={28} className="opacity-30 group-hover:opacity-100 group-hover:text-indigo-400 transition-all" />
@@ -76,7 +75,7 @@ export default function MetaMatrix({
         {/* 2. 标签区 */}
         {type !== 'about' && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom duration-500">
-            <Label icon={Tag} text="Relevant Tags" color="border-pink-500" />
+            <MetaLabel icon={Tag} text="Relevant Tags" color="border-pink-500" />
             <div className="flex flex-wrap gap-2 mb-4 p-3 bg-black/5 dark:bg-white/5 rounded-2xl border border-white/5 shadow-inner">
               {tags.map(t => (
                 <span key={t} className="px-3 py-1.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-black rounded-xl flex items-center gap-2 shadow-sm border border-indigo-500/10">
@@ -112,31 +111,10 @@ export default function MetaMatrix({
           </div>
         )}
 
-        {/* 3. 心情区 */}
-        {type === 'chatter' && setMood && (
-          <div className="flex flex-col animate-in fade-in slide-in-from-bottom duration-700">
-            <Label icon={Smile} text="Mood Today" color="border-yellow-500" />
-            <input
-              type="text" value={mood} onChange={(e) => setMood(e.target.value)} placeholder="输入心情词..."
-              className="w-full bg-white/10 dark:bg-black/20 rounded-2xl px-5 py-4 text-xs text-slate-800 dark:text-slate-200 border border-white/10 outline-none focus:ring-2 focus:ring-yellow-500 mb-4 shadow-inner"
-            />
-            <div className="flex flex-wrap gap-2">
-              {allHistoryMoods.map(h => (
-                <button
-                  key={h} onClick={() => setMood(h)}
-                  className="px-4 py-1.5 bg-yellow-500/10 rounded-full text-[10px] font-bold text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500 hover:text-white transition-all shadow-sm"
-                >
-                  {h}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 🌟 4. 摘要区 (补回丢失的代码) */}
+        {/* 3. 摘要区 */}
         {type !== 'about' && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom duration-700">
-            <Label icon={FileText} text="Description" color="border-emerald-500" />
+            <MetaLabel icon={FileText} text="Description" color="border-emerald-500" />
             <textarea
               rows={6}
               value={summary}
