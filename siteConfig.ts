@@ -4,7 +4,7 @@ export const siteConfig = {
   // 1. 网站标题与博主信息
   title: "XiaoFei の 宝藏之地",
   faviconUrl: "https://pic1.imgdb.cn/i/0341bm2ikt9mdpTuv7VJZQ.jpg",
-  authorName: "XiaoFe",
+  authorName: "XiaoFei",
   bio: "专注于后端开发与Agent/大模型应用开发的初学者，我期待任意形式的实习机会~",
 
   navTitle: "XiaoFei",
