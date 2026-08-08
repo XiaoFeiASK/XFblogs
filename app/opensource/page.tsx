@@ -47,6 +47,11 @@ type RepoGroup = {
   prs: OpenSourceItem[];
 };
 
+type ContributionRow = {
+  issue?: OpenSourceItem;
+  pr?: OpenSourceItem;
+};
+
 export const metadata = {
   title: `${openSourceConfig.title} | ${siteConfig.title}`,
   description: openSourceConfig.description,
@@ -107,6 +112,23 @@ const getIssueKey = (repo: string, number: number | string) => `${repo.toLowerCa
 
 const getContributionKey = (item: OpenSourceItem) => `${item.type}-${getIssueKey(item.repo, item.number)}-${item.id}`;
 
+const getContributionRows = (group: RepoGroup) => {
+  const issuesByKey = new Map(group.issues.map((issue) => [getIssueKey(issue.repo, issue.number), issue]));
+  const pairedIssueKeys = new Set<string>();
+  const rows: ContributionRow[] = group.prs.map((pr) => {
+    const issueKey = pr.linkedIssue ? getIssueKey(pr.linkedIssue.repo, pr.linkedIssue.number) : undefined;
+    const issue = issueKey ? issuesByKey.get(issueKey) : undefined;
+    if (issueKey && issue) pairedIssueKeys.add(issueKey);
+    return { issue, pr };
+  });
+
+  group.issues.forEach((issue) => {
+    if (!pairedIssueKeys.has(getIssueKey(issue.repo, issue.number))) rows.push({ issue });
+  });
+
+  return rows;
+};
+
 const normalizeTitle = (title: string) => title.toLowerCase().replace(/\s+/g, ' ').trim();
 
 const getContributionTitle = (item: OpenSourceItem) => {
@@ -166,6 +188,8 @@ const toOpenSourceItem = (item: GithubSearchItem): OpenSourceItem => {
     repoUrl: `https://github.com/${repo}`,
   };
 };
+
+const isVisiblePullRequest = (item: OpenSourceItem) => item.state === 'open' || item.isMerged;
 
 const toIssueItemFromLinkedIssue = (linkedIssue: LinkedIssue, pr: OpenSourceItem): OpenSourceItem => ({
   id: `linked-${linkedIssue.repo}-${linkedIssue.number}`,
@@ -234,11 +258,13 @@ async function getOpenSourceGroups() {
   const issueItems = issues.map(toOpenSourceItem);
   const issueByKey = new Map(issueItems.map((issue) => [getIssueKey(issue.repo, issue.number), issue]));
   const issueByRepoTitle = new Map(issueItems.map((issue) => [`${issue.repo.toLowerCase()}::${normalizeTitle(issue.title)}`, issue]));
-  const parsedPrItems = prs.map((item) => {
-    const pr = toOpenSourceItem(item);
-    const reference = getLinkedIssueReference(item.body, pr.repo);
-    return { pr, reference };
-  });
+  const parsedPrItems = prs
+    .map((item) => {
+      const pr = toOpenSourceItem(item);
+      const reference = getLinkedIssueReference(item.body, pr.repo);
+      return { pr, reference };
+    })
+    .filter(({ pr }) => isVisiblePullRequest(pr));
   const referencedIssues = new Map<string, { repo: string; number: number }>();
   parsedPrItems.forEach(({ reference }) => {
     if (reference) referencedIssues.set(getIssueKey(reference.repo, reference.number), reference);
@@ -281,10 +307,10 @@ async function getOpenSourceGroups() {
   items.forEach((item) => {
     const projectMeta = openSourceProjects.find((project) => project.repo === item.repo);
     const group = grouped.get(item.repo) || { repo: item.repo, repoUrl: projectMeta?.repoUrl || item.repoUrl, issues: [], prs: [] };
-    if (item.type === 'PR') {
+    if (item.type === 'PR' && isVisiblePullRequest(item)) {
       group.prs.push(item);
       if (item.linkedIssue) addIssueIfMissing(group, toIssueItemFromLinkedIssue(item.linkedIssue, item));
-    } else {
+    } else if (item.type !== 'PR') {
       addIssueIfMissing(group, item);
     }
     grouped.set(item.repo, group);
@@ -308,10 +334,10 @@ async function getOpenSourceGroups() {
         repoUrl: project.repoUrl || `https://github.com/${project.repo}`,
         linkedIssue: resolveManualLinkedIssue(entry.linkedIssue, project.repo),
       };
-      if (item.type === 'PR') {
+      if (item.type === 'PR' && isVisiblePullRequest(item)) {
         group.prs.push(item);
         if (item.linkedIssue) addIssueIfMissing(group, toIssueItemFromLinkedIssue(item.linkedIssue, item));
-      } else {
+      } else if (item.type !== 'PR') {
         addIssueIfMissing(group, item);
       }
     });
@@ -378,7 +404,7 @@ function ContributionCard({ item }: { item: OpenSourceItem }) {
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block rounded-2xl border border-white/40 bg-white/55 p-4 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-white/75 hover:shadow-indigo-500/20 dark:border-white/10 dark:bg-slate-800/55 dark:hover:bg-slate-800/75"
+      className="group flex h-full flex-col rounded-2xl border border-white/40 bg-white/55 p-4 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-white/75 hover:shadow-indigo-500/20 dark:border-white/10 dark:bg-slate-800/55 dark:hover:bg-slate-800/75"
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isPr ? 'bg-purple-500/10 text-purple-600 dark:text-purple-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'}`}>
@@ -392,7 +418,7 @@ function ContributionCard({ item }: { item: OpenSourceItem }) {
       <h3 className="line-clamp-2 whitespace-pre-line text-base font-black leading-snug text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-300">
         {title}
       </h3>
-      <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+      <div className="mt-auto flex items-center justify-between pt-4 text-[11px] font-bold text-slate-500 dark:text-slate-400">
         <span>更新 {formatDate(item.updatedAt)}</span>
         <span className="text-indigo-500 transition-transform group-hover:translate-x-1">跳转 ↗</span>
       </div>
@@ -463,42 +489,43 @@ export default async function OpenSourcePage() {
               </nav>
 
               <div id="open-source-list" className="space-y-8 scroll-mt-28">
-                {groups.map((group) => (
-                  <section key={group.repo} id={getRepoId(group.repo)} className="scroll-mt-28 rounded-[36px] border border-white/40 bg-white/45 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45 md:p-8">
-                    <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-400">Repository</p>
-                        <h2 className="mt-2 flex items-center gap-2 text-2xl font-black text-slate-950 dark:text-white md:text-3xl">
-                          {group.repo.toLowerCase().startsWith('tencent') && <span aria-hidden="true" className="shrink-0 font-normal leading-none">🐧</span>}
-                          <span>{getRepoLabel(group.repo)}</span>
-                        </h2>
+                {groups.map((group) => {
+                  const contributionRows = getContributionRows(group);
+                  const displayedRows: ContributionRow[] = contributionRows.length > 0 ? contributionRows : [{}];
+                  return (
+                    <section key={group.repo} id={getRepoId(group.repo)} className="scroll-mt-28 rounded-[36px] border border-white/40 bg-white/45 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45 md:p-8">
+                      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-400">Repository</p>
+                          <h2 className="mt-2 flex items-center gap-2 text-2xl font-black text-slate-950 dark:text-white md:text-3xl">
+                            {group.repo.toLowerCase().startsWith('tencent') && <span aria-hidden="true" className="shrink-0 font-normal leading-none">🐧</span>}
+                            <span>{getRepoLabel(group.repo)}</span>
+                          </h2>
+                        </div>
+                        <a href={group.repoUrl} target="_blank" rel="noopener noreferrer" className="rounded-2xl bg-slate-950 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-indigo-600 dark:bg-white dark:text-slate-950 dark:hover:bg-indigo-200">
+                          仓库主页 ↗
+                        </a>
                       </div>
-                      <a href={group.repoUrl} target="_blank" rel="noopener noreferrer" className="rounded-2xl bg-slate-950 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-indigo-600 dark:bg-white dark:text-slate-950 dark:hover:bg-indigo-200">
-                        仓库主页 ↗
-                      </a>
-                    </div>
 
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                      <div>
-                        <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-300">
+                      <div className="mb-3 hidden grid-cols-2 gap-6 lg:grid">
+                        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-300">
                           <span className="h-2 w-2 rounded-full bg-emerald-500"></span> Issues
                         </div>
-                        <div className="space-y-3">
-                          {group.issues.length > 0 ? group.issues.map((item) => <ContributionCard key={getContributionKey(item)} item={item} />) : <p className="rounded-2xl bg-white/40 p-4 text-sm font-bold text-slate-500 dark:bg-white/5">暂无公开 Issue 记录</p>}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-300">
+                        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-300">
                           <span className="h-2 w-2 rounded-full bg-purple-500"></span> Pull Requests
                         </div>
-                        <div className="space-y-3">
-                          {group.prs.length > 0 ? group.prs.map((item) => <ContributionCard key={getContributionKey(item)} item={item} />) : <p className="rounded-2xl bg-white/40 p-4 text-sm font-bold text-slate-500 dark:bg-white/5">暂无公开 PR 记录</p>}
-                        </div>
                       </div>
-                    </div>
-                  </section>
-                ))}
+                      <div className="space-y-3">
+                        {displayedRows.map(({ issue, pr }, index) => (
+                          <div key={pr ? getContributionKey(pr) : issue ? getContributionKey(issue) : `empty-${group.repo}-${index}`} className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-6">
+                            {issue ? <ContributionCard item={issue} /> : <p className="h-full rounded-2xl border border-dashed border-emerald-500/20 bg-white/25 p-4 text-sm font-bold text-slate-500 dark:bg-white/5 dark:text-slate-400">未关联 Issue</p>}
+                            {pr ? <ContributionCard item={pr} /> : <p className="h-full rounded-2xl border border-dashed border-purple-500/20 bg-white/25 p-4 text-sm font-bold text-slate-500 dark:bg-white/5 dark:text-slate-400">暂无对应 PR</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
               </div>
             </>
           ) : (
