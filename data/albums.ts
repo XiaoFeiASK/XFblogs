@@ -5,9 +5,9 @@ export interface Album { id: string; title: string; description: string; cover: 
 export const albums: Album[] = [
   {
     "id": "history-tour",
-    "title": "唐宋历史巡游",
+    "title": "一位开源爱好者~",
     "description": "寻访千年前的长安与汴梁遗迹",
-    "cover": "https://img.cdn1.vip/i/6a6f1809dc025_1785665545.webp",
+    "cover": "https://pic1.imgdb.cn/i/0341bm33E6zI0BBhPMEaVl.webp",
     "date": "2025.10",
     "photos": [
       {
