@@ -3,7 +3,7 @@
 export const siteConfig = {
   // 1. 网站标题与博主信息
   title: "XiaoFei の 宝藏之地",
-  faviconUrl: "https://img.cdn1.vip/i/6a6f0de71da3b_1785662951.webp",
+  faviconUrl: "https://pic1.imgdb.cn/i/0341bm2ikt9mdpTuv7VJZQ.jpg",
   authorName: "XiaoFei",
   bio: "专注于后端开发与Agent/大模型应用开发的初学者，我期待任意形式的实习机会~",
 
@@ -15,14 +15,14 @@ export const siteConfig = {
   navAfter: "宝藏之地",
 
   // 2. 头像设置 (支持网络链接，或将图片放入 public 文件夹后使用 "/me.jpg")
-  avatarUrl: "https://img.cdn1.vip/i/6a6f0de71da3b_1785662951.webp",
+  avatarUrl: "https://pic1.imgdb.cn/i/0341bm2ikt9mdpTuv7VJZQ.jpg",
 
   // 3. 网站背景设置 (二选一)
   // 如果想用纯图片背景，请在下面 bgImage 写路径，并将 useGradient 设为 false
   useGradient: false,
   themeColors: ["#a18cd1", "#fbc2eb", "#a1c4fd", "#c2e9fb"], // 呼吸流动的颜色组合
 // 修改这里：变成图片数组
-  bgImages: ["https://bu.dusays.com/2026/03/24/69c26fe4acdb5.jpg", "https://img.cdn1.vip/i/6a6f14c8b6601_1785664712.webp", "https://img.cdn1.vip/i/6a6f1af4b6cdb_1785666292.webp"],
+  bgImages: ["https://bu.dusays.com/2026/03/24/69c26fe4acdb5.jpg", "https://pic1.imgdb.cn/i/0341bm33E6zI0BBhPMEaVl.webp", "https://pic1.imgdb.cn/i/0341bm2vKSqQQ1tePnx75y.webp"],
 
   // 4. 文章默认封面图 (当 Markdown 没写 cover 时显示)
   defaultPostCover: "https://bu.dusays.com/2026/03/24/69c1e38b346cb.jpg",
@@ -41,6 +41,7 @@ export const siteConfig = {
   counts: {
     photos: 128, // 照片墙数量可以手动写死或动态计算
   },
+
   // 👇 【新增】：全局背景弹幕配置
   danmakuList: ["在干嘛呢？", "有笨蛋嘛？", "前方高能反应！", "GROMACS 跑起来了吗？", "MD 模拟什么时候才能出图啊", "Graph Neural Networks 炼丹中...", "BUG 修复进度 99%", "今天背单词了吗？", "Tailwind CSS 拯救前端", "写算法中", "睡大觉中", "到底在干嘛？"],
   gitalkConfig: {

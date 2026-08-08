@@ -5,7 +5,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function LatestPostsCarousel({ posts }: { posts: any[] }) {
+type LatestPost = {
+  slug: string;
+  title: string;
+  description?: string;
+  cover: string;
+  formattedDate?: string;
+};
+
+export default function LatestPostsCarousel({ posts }: { posts: LatestPost[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // 设置自动播放定时器
@@ -34,10 +42,10 @@ export default function LatestPostsCarousel({ posts }: { posts: any[] }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.3 }}
           className="absolute inset-0 z-0"
         >
-          <img src={currentPost.cover} className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105" alt={currentPost.title} />
+          <img src={currentPost.cover} className="w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105" alt={currentPost.title} loading="eager" decoding="async" width={900} height={630} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
         </motion.div>
       </AnimatePresence>

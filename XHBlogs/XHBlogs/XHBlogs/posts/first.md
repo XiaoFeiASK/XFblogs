@@ -1,9 +1,11 @@
 ---
-title: "GROMACS 2025 分子动力学模拟初探"
-date: "2026-03-24 07:00:01"
-description: "记录一下基础的模拟设置过程"
-cover: "https://bu.dusays.com/2026/03/24/69c1e38b346cb.jpg"
-tags: ["分子动力学", "科研", "GROMACS"]
+title: issue：#1134
+date: '2026-03-24 07:00:01'
+tags:
+- 分子动力学
+mood: ''
+cover: https://img.cdn1.vip/i/6a6f167bde92b_1785665147.webp
+description: 记录一下基础的模拟设置过程
 ---
 
 ## 终于建好博客了！

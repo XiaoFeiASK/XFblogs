@@ -9,12 +9,13 @@ CURRENT_API_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_API_DIR, "..", ".."))
 
 # 需要镜像覆盖的文件夹 (先清空目标，再全量复制)
-SYNC_DIRS = ["posts", "chatters", "moments"]
+SYNC_DIRS = ["posts"]
 # 需要精确覆盖的单文件
 SYNC_FILES = [
     "app/about/about.md",
     "data/albums.ts",
     "data/friends.ts",
+    "data/opensource.ts",
     "data/projects.ts",
     "siteConfig.ts"
 ]

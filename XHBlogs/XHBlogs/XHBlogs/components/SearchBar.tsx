@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -10,24 +10,28 @@ interface Post {
   description?: string;
   tags?: string[];
   date?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
+
+const SEARCH_RESULT_LIMIT = 10;
 
 const escapeRegExp = (string: string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
 const Highlight = ({ text = '', query = '' }) => {
-  if (!query.trim() || !text) return <>{text}</>;
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery || !text) return <>{text}</>;
 
-  const safeQuery = escapeRegExp(query);
+  const safeQuery = escapeRegExp(trimmedQuery);
   const regex = new RegExp(`(${safeQuery})`, 'gi');
   const parts = String(text).split(regex);
+  const queryLower = trimmedQuery.toLowerCase();
 
   return (
     <>
       {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase() ? (
+        part.toLowerCase() === queryLower ? (
           <mark key={i} className="bg-yellow-300 dark:bg-yellow-500/80 text-slate-900 dark:text-white px-1 mx-[1px] rounded-[4px] shadow-sm font-bold transition-all">
             {part}
           </mark>
@@ -43,6 +47,7 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -54,18 +59,19 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const indexedPosts = useMemo(() => posts.map(post => ({
+    ...post,
+    searchText: `${post.title || ''} ${post.description || ''} ${(post.tags || []).join(' ')}`.toLowerCase(),
+  })), [posts]);
+
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const query = searchQuery.toLowerCase();
+    const query = deferredSearchQuery.trim().toLowerCase();
+    if (!query) return [];
 
-    return posts.filter(post => {
-      const titleMatch = (post.title || '').toLowerCase().includes(query);
-      const descMatch = (post.description || '').toLowerCase().includes(query);
-      const tagMatch = (post.tags || []).some(tag => tag.toLowerCase().includes(query));
-
-      return titleMatch || descMatch || tagMatch;
-    });
-  }, [searchQuery, posts]);
+    return indexedPosts
+      .filter(post => post.searchText.includes(query))
+      .slice(0, SEARCH_RESULT_LIMIT);
+  }, [deferredSearchQuery, indexedPosts]);
 
   return (
     <div className="relative w-full max-w-2xl mx-auto mb-10 z-[100]" ref={containerRef}>
@@ -108,10 +114,10 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
       <AnimatePresence>
         {isOpen && searchQuery.trim() !== '' && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
             className="absolute top-full left-0 right-0 mt-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl border border-white/50 dark:border-slate-700/50 rounded-3xl shadow-2xl overflow-hidden max-h-[450px] overflow-y-auto z-20"
           >
             {searchResults.length > 0 ? (
@@ -125,7 +131,7 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 transition-colors line-clamp-1">
-                        <Highlight text={post.title} query={searchQuery} />
+                        <Highlight text={post.title} query={deferredSearchQuery} />
                       </h4>
                       {post.date && (
                         <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-md shrink-0 mt-1">
@@ -136,7 +142,7 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
 
                     {post.description && (
                       <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                        <Highlight text={post.description} query={searchQuery} />
+                        <Highlight text={post.description} query={deferredSearchQuery} />
                       </p>
                     )}
 
@@ -147,7 +153,7 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5 opacity-60">
                               <line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line>
                             </svg>
-                            <Highlight text={tag} query={searchQuery} />
+                            <Highlight text={tag} query={deferredSearchQuery} />
                           </span>
                         ))}
                       </div>
@@ -163,7 +169,7 @@ export default function SearchBar({ posts = [] }: { posts: Post[] }) {
                   </svg>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 font-medium">
-                  数据海中未发现关于 "<span className="text-indigo-500 font-bold">{searchQuery}</span>" 的踪迹
+                  数据海中未发现关于 &ldquo;<span className="text-indigo-500 font-bold">{searchQuery}</span>&rdquo; 的踪迹
                 </p>
               </div>
             )}

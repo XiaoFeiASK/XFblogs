@@ -28,14 +28,11 @@ function EditorContent() {
   const [tags, setTags] = useState<string[]>([]);
   const [cover, setCover] = useState('');
   const [summary, setSummary] = useState('');
-  const [mood, setMood] = useState('');
   const [content, setContent] = useState('');
   const [date, setDate] = useState('');
 
   const [historyPostTags, setHistoryPostTags] = useState<string[]>([]);
-  const [historyChatterTags, setHistoryChatterTags] = useState<string[]>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(true);
-  const historyMoods = ['开心', '疲惫', '平静', '激动', 'Emo'];
 
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -57,7 +54,6 @@ function EditorContent() {
         const data = await res.json();
         if (data.success) {
           setHistoryPostTags(data.postTags || []);
-          setHistoryChatterTags(data.chatterTags || []);
         }
       } catch (e) { console.error(e); }
       finally { setIsLoadingTags(false); }
@@ -86,7 +82,6 @@ function EditorContent() {
             setTags(data.draft.tags || []);
             setCover(data.draft.cover || '');
             setSummary(data.draft.description || '');
-            setMood(data.draft.mood || '');
             setContent(data.draft.content || '');
 
             setTimeout(() => setHasUnsavedChanges(false), 500);
@@ -104,7 +99,7 @@ function EditorContent() {
     if (!isLoadingTags) {
       setHasUnsavedChanges(true);
     }
-  }, [title, tags, cover, summary, mood]);
+  }, [title, tags, cover, summary]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -131,7 +126,7 @@ function EditorContent() {
     }
     const payload = {
       id: docType === 'about' ? 'about' : (currentDocId === 'new' ? null : currentDocId),
-      type: docType, title, tags, cover, mood, description: summary,
+      type: docType, title, tags, cover, description: summary,
       content: editorRef.current?.getContent() || '',
       date: date || new Date().toISOString().split('T')[0],
       published: isPublish
@@ -235,9 +230,9 @@ function EditorContent() {
 
           <aside className="w-[360px] shrink-0 bg-white/30 dark:bg-slate-800/40 backdrop-blur-[60px] rounded-[50px] shadow-2xl border border-white/30 dark:border-white/10 flex flex-col overflow-hidden">
             <MetaMatrix
-              type={docType as any} tags={tags} setTags={setTags} cover={cover} setCover={setCover} summary={summary} setSummary={setSummary} mood={mood} setMood={setMood}
-              allHistoryPostTags={historyPostTags} allHistoryChatterTags={historyChatterTags} isLoadingTags={isLoadingTags}
-              allHistoryMoods={historyMoods} onSave={(isPublish) => handleSave(isPublish, false)} isSaving={isSaving} lastSaved={lastSaved} onOpenImageTool={() => { setImgToolTarget('cover'); setIsImgToolOpen(true); }}
+              type={docType === 'about' ? 'about' : 'post'} tags={tags} setTags={setTags} cover={cover} setCover={setCover} summary={summary} setSummary={setSummary}
+              allHistoryPostTags={historyPostTags} isLoadingTags={isLoadingTags}
+              onSave={(isPublish) => handleSave(isPublish, false)} isSaving={isSaving} lastSaved={lastSaved} onOpenImageTool={() => { setImgToolTarget('cover'); setIsImgToolOpen(true); }}
             />
           </aside>
         </main>

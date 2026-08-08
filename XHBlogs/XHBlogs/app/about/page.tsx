@@ -20,7 +20,7 @@ import PageTransition from '../../components/PageTransition';
 import AboutClient from '../../components/AboutClient';
 import { Suspense } from 'react';
 
-function getDirActivities(dirName: string, typeLabel: '文章' | '杂谈' | '说说', linkPrefix: string) {
+function getDirActivities(dirName: string, typeLabel: '文章', linkPrefix: string) {
   const dirPath = path.join(process.cwd(), dirName);
   if (!fs.existsSync(dirPath)) return [];
 
@@ -47,7 +47,8 @@ export default async function AboutPage() {
   try {
     const fileContents = fs.readFileSync(fullPath, 'utf8');
     // 🌟 改为 let，以便进行文本预清洗
-    let { data, content } = matter(fileContents);
+    const { data, content: rawContent } = matter(fileContents);
+    let content = rawContent;
     if (data.cover) coverImage = data.cover;
 
     // ==========================================
@@ -76,7 +77,7 @@ export default async function AboutPage() {
       .use(remarkMath)
       .use(remarkRehype, { allowDangerousHtml: true })
       // 🌟 核心修复：开启自动语言侦测，并限制语言白名单！
-      // @ts-ignore
+      // @ts-expect-error rehype-highlight accepts runtime options not covered by its public types here.
       .use(rehypeHighlight, {
         detect: true,
         ignoreMissing: true,
@@ -92,10 +93,8 @@ export default async function AboutPage() {
   }
 
   const posts = getDirActivities('posts', '文章', 'posts');
-  const chatters = getDirActivities('chatters', '杂谈', 'chatter');
-  const moments = getDirActivities('moments', '说说', 'moments');
 
-  const allActivities = [...posts, ...chatters, ...moments].sort((a, b) => {
+  const allActivities = posts.sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 

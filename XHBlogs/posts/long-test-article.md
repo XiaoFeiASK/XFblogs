@@ -1,27 +1,57 @@
 ---
-title: 多靶点激酶抑制剂筛选：从虚拟到现实的漫长征途
+title: Leetcode一百题重刷——两数之和
 date: '2026-03-26 07:00:00'
 tags:
-- 学术
-- 深度学习
-- GROMACS
-mood: ''
-cover: https://img.cdn1.vip/i/6a6f1af4b6cdb_1785666292.webp
-description: 一篇超长的技术记录，详细阐述了我们在 STAT3/JAK2 抑制剂研发过程中，如何使用图神经网络和分子动力学进行多尺度模拟。
+- leetcode
+cover: https://pic1.imgdb.cn/i/0341bm2vKSqQQ1tePnx75y.webp
+description: 一篇简单的算法记录，记录了关于leecode hot100开篇之经典！拉开了无数人算法之程的序幕！
 ---
 
-## 第一章：引言与背景
+## **两数之和**
 
-在现代药物研发中，计算化学已经成为不可或缺的一环。随着靶点结构的解析和算力的提升，我们不再像盲人摸象一样进行高通量筛选（HTS）。
+**解题思路：** 核心思想依然是“边遍历，边查表”。我们维护一个哈希表，里面记录的是“已经遍历过的数字”以及“它们的下标”。对于每一个当前遍历到的数字 `nums[i]`，我们去表中寻找是否存在一个数字等于 `target - nums[i]`。如果有，直接返回两者的下标；如果没有，就把当前数字和下标登记到表中。
 
-### 1.1 三阴性乳腺癌 (TNBC) 的困境
+```
+class 两数之和 {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        map<int, int> m;
+        for(int i = 0;i<nums.size();i++){
+            int mid = target - nums[i];
+            if(m.find(mid) != m.end()) {
+                return {m.find(mid)->second,i};
+            }
+            else {
+                m[nums[i]] = i;
+            }
+        }
+        return {};
+    }
+};
+```
 
-TNBC 由于缺乏雌激素受体、孕激素受体和 HER2 的表达，传统的内分泌治疗和靶向治疗对其无效。
+## **函数调用差异点**
 
-### 1.2 STAT3 与 JAK2 的级联反应
+1. HashMap 变成了 `unordered_map`
+2. **Java**: `Map<Integer, Integer> map = new HashMap<>();（此处我倒是用map）`
+3. **C++**: `unordered_map<int, int> m;`
+4. `containsKey()` 变成了 `find() != end()`
+5. **Java**: `if (map.containsKey(mid))`
+6. **C++**: `if (m.find(mid) != m.end())` 或者 `if (m.count(mid))`
+7. **⚠️ 避坑提醒**：C++ 没有直接的 `containsKey`。`find()` 返回的是一个“激光笔”（迭代器），你要判断这个激光笔是不是指到了表尾之外的虚无空间（`end()`）。
+8. 获取 Value：`get()` 变成了 `it->second`
+9. **Java**: `int val = map.get(key);`
+10. **C++**: `int val = it->second;` (如果已经 find 到了) 或者 `m[key]`
+11. **⚠️ 避坑提醒**：用 `find()` 找到目标后，一定要用 `->second` 把值取出来。C++ 的哈希表里存的是成对的数据（pair），`first` 是键，`second` 是值。
+12. 返回数组：`new int[]{...}` 变成了 `{...}`
+13. **Java**: `return new int[]{a, b};`
+14. **C++**: `return {a, b};`
+15. **⚠️ 避坑提醒**：C++11 引入了列表初始化 `{}`。不需要再像 Java 那样`new` 一个数组出来，只要外层函数规定了返回 `vector<int>`，直接 `return {变量1, 变量2}`，编译器会自动打包好。
+16. 增强 for 循环的隐藏开销
+17. **Java**: `for (int x : nums)`
+18. **C++**: `for (const auto& x : nums)`
+19. **⚠️ 避坑提醒**：Java 里基本类型传值，对象传引用，这都是底层安排好的。但 C++ 给了选择权。如果不加 `&`（写成 `auto x`），C++ 会死板地把每个东西都复制一份。为了追求极致性能，遍历时随手加上 `&` 是一定要养成的肌肉记忆。
 
-在这个信号通路中，JAK2 的磷酸化会激活 STAT3，进而促使肿瘤细胞增殖。如果我们能同时抑制这两个靶点，就能形成双重打击。
-
-## 测试用文章
+未找到相关的 [Issues](https://github.com/heiehiehi/XHSBlogComment/issues) 进行评论
 
 ‍

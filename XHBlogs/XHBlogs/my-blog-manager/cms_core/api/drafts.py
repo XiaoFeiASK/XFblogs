@@ -38,15 +38,18 @@ async def save_draft(request: Request):
     elif payload.get("type") == "about":
         draft_id = "about"
 
+    doc_type = payload.get("type", "post")
+    if doc_type not in ["post", "about"]:
+        doc_type = "post"
+
     draft_data = {
         "id": draft_id,
-        "type": payload.get("type", "post"),
+        "type": doc_type,
         "title": payload.get("title", ""),
         "description": payload.get("description", ""),
         "content": payload.get("content", ""),
         "cover": payload.get("cover", ""),
         "tags": payload.get("tags", []),
-        "mood": payload.get("mood", ""),
         "date": payload.get("date", ""),
         "lastModified": int(time.time() * 1000)
     }
@@ -107,15 +110,14 @@ async def get_draft(request: Request):
     if raw_id == "about" or doc_type == "about":
         target_md = os.path.join(base_dir, "app", "about", "about.md")
     else:
-        folder = "posts" if doc_type == "post" else "chatters"
-        target_md = os.path.join(base_dir, folder, f"{raw_id}.md")
+        target_md = os.path.join(base_dir, "posts", f"{raw_id}.md")
 
     if target_md and os.path.exists(target_md):
         try:
             with open(target_md, "r", encoding="utf-8") as f:
                 raw_content = f.read()
 
-            title, cover, description, mood, date = "", "", "", "", ""
+            title, cover, description, date = "", "", "", ""
             tags = []
             md_body = raw_content
 
@@ -129,7 +131,6 @@ async def get_draft(request: Request):
                             title = fm.get("title", "")
                             cover = fm.get("cover", "")
                             description = fm.get("description", "")
-                            mood = fm.get("mood", "")
                             date = fm.get("date", "")
                             tags = fm.get("tags", [])
                             if not isinstance(tags, list): tags = [tags] if tags else []
@@ -148,7 +149,6 @@ async def get_draft(request: Request):
                 "tags": tags,
                 "cover": cover,
                 "description": description,
-                "mood": mood,
                 "date": date
             }
             return {"success": True, "draft": draft_data}
@@ -172,8 +172,7 @@ async def delete_draft(request: Request):
 
     possible_paths = [
         os.path.join(drafts_dir, f"{raw_id}.json"),
-        os.path.join(base_dir, "posts", f"{raw_id}.md"),
-        os.path.join(base_dir, "chatters", f"{raw_id}.md")
+        os.path.join(base_dir, "posts", f"{raw_id}.md")
     ]
 
     deleted_count = 0
@@ -203,6 +202,8 @@ async def sync_local_operations(request: Request):
         if op.get("type") == "publish_article":
             data = op.get("value", {})
             doc_type = data.get("type", "post")
+            if doc_type not in ["post", "about"]:
+                doc_type = "post"
             doc_id = data.get("id", "")
 
             final_id = doc_id
@@ -245,7 +246,6 @@ async def sync_local_operations(request: Request):
                 "title": data.get("title", ""),
                 "date": final_date,
                 "tags": data.get("tags", []),
-                "mood": data.get("mood", ""),
                 "cover": data.get("cover", ""),
                 "description": data.get("description", "")
             }
@@ -254,8 +254,7 @@ async def sync_local_operations(request: Request):
             if doc_type == "about":
                 save_path = os.path.join(base_dir, "app", "about", "about.md")
             else:
-                folder = "posts" if doc_type == "post" else "chatters"
-                save_path = os.path.join(base_dir, folder, f"{final_id}.md")
+                save_path = os.path.join(base_dir, "posts", f"{final_id}.md")
 
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
             with open(save_path, "w", encoding="utf-8") as f:
@@ -277,8 +276,8 @@ async def sync_local_operations(request: Request):
 async def get_all_historical_tags():
     # 🌟 修复：用 PROJECT_ROOT 替换 os.getcwd()
     base_dir = PROJECT_ROOT
-    scan_dirs = {"post": os.path.join(base_dir, "posts"), "chatter": os.path.join(base_dir, "chatters")}
-    tag_collections = {"post": set(), "chatter": set()}
+    scan_dirs = {"post": os.path.join(base_dir, "posts")}
+    tag_collections = {"post": set()}
     fm_regex = re.compile(r'---\s*\n(.*?)\n---\s*', re.DOTALL)
 
     for doc_type, dir_path in scan_dirs.items():
@@ -295,5 +294,4 @@ async def get_all_historical_tags():
                                     tag_collections[doc_type].add(str(t))
                 except:
                     continue
-    return {"success": True, "postTags": sorted(list(tag_collections["post"])),
-            "chatterTags": sorted(list(tag_collections["chatter"]))}
+    return {"success": True, "postTags": sorted(list(tag_collections["post"]))}

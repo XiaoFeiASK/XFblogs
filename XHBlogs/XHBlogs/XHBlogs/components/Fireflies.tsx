@@ -19,29 +19,41 @@ export default function Fireflies() {
   const [flies, setFlies] = useState<Firefly[]>([]);
 
   useEffect(() => {
-    const generated: Firefly[] = Array.from({ length: 50 }).map((_, i) => ({
-      id: i,
-      // 初始出生点
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      size: 3 + Math.random() * 4,
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const generate = () => {
+      if (document.visibilityState === 'hidden' || mediaQuery.matches) {
+        setFlies([]);
+        return;
+      }
 
-      // 呼吸闪烁：较快，3 到 8 秒一个来回
-      breatheDuration: 3 + Math.random() * 5,
-      breatheDelay: Math.random() * -10,
+      const count = window.innerWidth < 768 ? 14 : 28;
+      const generated: Firefly[] = Array.from({ length: count }).map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        size: 3 + Math.random() * 4,
+        breatheDuration: 3 + Math.random() * 5,
+        breatheDelay: Math.random() * -10,
+        floatDuration: 15 + Math.random() * 20,
+        floatDelay: Math.random() * -20,
+        floatPath: `float${Math.floor(Math.random() * 4) + 1}`,
+      }));
+      setFlies(generated);
+    };
 
-      // 飞行移动：极其缓慢，15 到 35 秒一个来回，营造漫游感
-      floatDuration: 15 + Math.random() * 20,
-      floatDelay: Math.random() * -20,
-
-      // 随机分配 4 种不同的飞行轨迹，避免大家往同一个方向飞
-      floatPath: `float${Math.floor(Math.random() * 4) + 1}`,
-    }));
-    setFlies(generated);
+    generate();
+    document.addEventListener('visibilitychange', generate);
+    window.addEventListener('resize', generate);
+    mediaQuery.addEventListener('change', generate);
+    return () => {
+      document.removeEventListener('visibilitychange', generate);
+      window.removeEventListener('resize', generate);
+      mediaQuery.removeEventListener('change', generate);
+    };
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen">
+    <div className="fixed inset-0 w-full h-full pointer-events-none z-10 overflow-hidden">
 
       {/* 动画引擎 */}
       <style>{`

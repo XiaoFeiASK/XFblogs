@@ -5,7 +5,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function LatestChatterCarousel({ chatters }: { chatters: any[] }) {
+type LatestChatter = {
+  slug: string;
+  title: string;
+  description?: string;
+  cover: string;
+  formattedDate?: string;
+};
+
+export default function LatestChatterCarousel({ chatters }: { chatters: LatestChatter[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -21,9 +29,9 @@ export default function LatestChatterCarousel({ chatters }: { chatters: any[] })
   const currentChatter = chatters[currentIndex];
 
   const holoVariants = {
-    initial: { opacity: 0, scale: 0.95, filter: "blur(10px)" },
-    animate: { opacity: 1, scale: 1, filter: "blur(0px)" },
-    exit: { opacity: 0, scale: 1.05, filter: "blur(10px)" },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   };
 
   return (
@@ -38,10 +46,10 @@ export default function LatestChatterCarousel({ chatters }: { chatters: any[] })
           initial="initial"
           animate="animate"
           exit="exit"
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           className="absolute inset-0 z-0"
         >
-          <img src={currentChatter.cover} className="w-full h-full object-cover opacity-80 dark:opacity-60 transition-transform duration-1000 group-hover:scale-105" alt="Chatter Cover" />
+          <img src={currentChatter.cover} className="w-full h-full object-cover opacity-80 dark:opacity-60 transition-transform duration-500 group-hover:scale-105" alt="Chatter Cover" loading="eager" decoding="async" width={900} height={500} />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/10"></div>
         </motion.div>
       </AnimatePresence>

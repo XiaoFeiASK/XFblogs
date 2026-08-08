@@ -1,24 +1,28 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BackButton from '../../components/BackButton'; // 注意层级路径
 import { projectsData } from '../../data/projects';
 
+const searchableProjects = projectsData.map(project => ({
+  project,
+  searchText: `${project.name} ${project.description} ${project.tags.join(' ')}`.toLowerCase(),
+}));
+
 export default function ProjectsBoard() {
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   // 搜索过滤逻辑
   const filteredProjects = useMemo(() => {
-    if (searchQuery.trim() === "") return projectsData;
-    const query = searchQuery.trim().toLowerCase();
+    const query = deferredSearchQuery.trim().toLowerCase();
+    if (query === "") return projectsData;
 
-    return projectsData.filter(project =>
-      project.name.toLowerCase().includes(query) ||
-      project.description.toLowerCase().includes(query) ||
-      project.tags.some(tag => tag.toLowerCase().includes(query))
-    );
-  }, [searchQuery]);
+    return searchableProjects
+      .filter(({ searchText }) => searchText.includes(query))
+      .map(({ project }) => project);
+  }, [deferredSearchQuery]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-10 py-10 relative z-10">
@@ -55,15 +59,14 @@ export default function ProjectsBoard() {
       </div>
 
       {/* 矩阵展示区：CSS Grid 布局 */}
-      <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 relative">
-        <AnimatePresence>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 relative">
+        <AnimatePresence initial={false}>
           {filteredProjects.map((project) => (
             <motion.div
-              layout
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -20 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
               key={project.id}
               className="h-full"
             >
@@ -114,7 +117,7 @@ export default function ProjectsBoard() {
             云端尚未建立代号为 [{searchQuery}] 的档案...
           </motion.div>
         )}
-      </motion.div>
+      </div>
 
     </div>
   );

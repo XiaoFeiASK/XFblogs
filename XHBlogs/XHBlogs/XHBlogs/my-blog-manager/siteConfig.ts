@@ -2,12 +2,12 @@
 
 export const siteConfig = {
   // 1. 网站标题与博主信息
-  title: "XingHuiSama の 宝藏之地",
+  title: "XiaoFei の 宝藏之地",
   faviconUrl: "https://bu.dusays.com/2026/03/24/69c1e38ac1846.jpg",
-  authorName: "XingHuiSama",
-  bio: "在代码、学术与分子动力学模拟间穿梭的普通人。近期正埋头于 GROMACS 模拟研究与神经网络计算。",
+  authorName: "XiaoFei",
+  bio: "专注于后端开发与Agent/大模型应用开发的初学者，我期待任意形式的实习机会~",
 
-  navTitle: "XingHuiSama",
+  navTitle: "XiaoFei",
 
   // 👇 【新增】导航栏中间的那个后缀/分隔符（默认是 の）
   navSuffix: "の",
@@ -31,12 +31,12 @@ export const siteConfig = {
   photoWallImage: "https://bu.dusays.com/2026/03/24/69c1e38b4c370.jpg",
   cloudMusicIds: ["1809646618", "3361076230", "1859390262"],
   social: {
-    github: "https://github.com/heiehiehi",
-    gitee: "https://github.com/heiehiehi",
-    csdn: "https://blog.csdn.net/",
-    email: "1124533793@qq.com",
-    qq: "1124533793",
-    wechat: "XingHuisama",
+    github: "https://github.com/XiaoFeiASK",
+    gitee: "https://github.com/XiaoFeiASK",
+    csdn: "https://blog.csdn.net/Xiao_FeiA?type=blog",
+    email: "2017382524@qq.com",
+    qq: "2017382524",
+    wechat: "qq2017382524",
   },
   counts: {
     photos: 128, // 照片墙数量可以手动写死或动态计算
@@ -64,6 +64,6 @@ export const siteConfig = {
     name: "萌ICP备 20260240号",
     link: "https://icp.gov.moe/?keyword=20260240",
   },
-  friendLinkApplyFormat: "名称：XingHuiSamaの宝藏之地\n简介：今天我也要学习吗\n链接：https://www.xinghuisama.top\n头像：https://bu.dusays.com/2026/03/24/69c1e38ac1846.jpg",
+  friendLinkApplyFormat: "名称：XingHuiSamaの宝藏之地\n简介：今天也可以学计算机吗？\n链接：https://www.xinghuisama.top\n头像：https://bu.dusays.com/2026/03/24/69c1e38ac1846.jpg",
   enableLevelSystem: true,
 };
