@@ -201,7 +201,7 @@ async function fetchGithubItems(user: string, type: 'issue' | 'pr') {
       Accept: 'application/vnd.github+json',
       'User-Agent': 'XiaoFei-blog-opensource',
     },
-    next: { revalidate: 1800 },
+    next: { revalidate: 60 },
   });
 
   if (!response.ok) return [];
@@ -215,7 +215,7 @@ async function fetchGithubIssue(repo: string, number: number | string) {
       Accept: 'application/vnd.github+json',
       'User-Agent': 'XiaoFei-blog-opensource',
     },
-    next: { revalidate: 1800 },
+    next: { revalidate: 60 },
   });
 
   if (!response.ok) return undefined;
