@@ -194,7 +194,8 @@ const addIssueIfMissing = (group: RepoGroup, issue: OpenSourceItem) => {
 };
 
 async function fetchGithubItems(user: string, type: 'issue' | 'pr') {
-  const query = encodeURIComponent(`author:${user} type:${type} is:public`);
+  const qualifier = type === 'issue' ? 'involves' : 'author';
+  const query = encodeURIComponent(`${qualifier}:${user} type:${type} is:public`);
   const response = await fetch(`https://api.github.com/search/issues?q=${query}&sort=updated&order=desc&per_page=100`, {
     headers: {
       Accept: 'application/vnd.github+json',
