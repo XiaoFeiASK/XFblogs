@@ -23,13 +23,5 @@ export const projectsData: Project[] = [
       "python",
       "shell"
     ]
-  },
-  {
-    "id": "proj_1785660095543",
-    "name": "A",
-    "githubUrl": "啊",
-    "description": "暂无描述。",
-    "icon": "🌏",
-    "tags": []
   }
 ];
