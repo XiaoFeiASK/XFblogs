@@ -319,15 +319,15 @@ async function getOpenSourceGroups() {
 
   grouped.forEach((group) => {
     const issuesByKey = new Map(group.issues.map((issue) => [getIssueKey(issue.repo, issue.number), issue]));
-    const pairedIssuesByKey = new Map<string, OpenSourceItem>();
-    group.prs.forEach((pr) => {
-      if (!pr.linkedIssue) return;
-      const issueKey = getIssueKey(pr.linkedIssue.repo, pr.linkedIssue.number);
-      const issue = issuesByKey.get(issueKey);
-      if (issue) pairedIssuesByKey.set(issueKey, issue);
-    });
-    const pairedIssues = Array.from(pairedIssuesByKey.values());
-    const pairedIssueKeys = new Set(pairedIssuesByKey.keys());
+    const pairedIssues = group.prs
+      .map((pr) => {
+        if (!pr.linkedIssue) return undefined;
+        const issueKey = getIssueKey(pr.linkedIssue.repo, pr.linkedIssue.number);
+        const issue = issuesByKey.get(issueKey);
+        return issue ? { ...issue, id: `${issue.id}-paired-${pr.id}` } : undefined;
+      })
+      .filter((issue): issue is OpenSourceItem => Boolean(issue));
+    const pairedIssueKeys = new Set(pairedIssues.map((issue) => getIssueKey(issue.repo, issue.number)));
     const remainingIssues = group.issues.filter((issue) => !pairedIssueKeys.has(getIssueKey(issue.repo, issue.number)));
     group.issues = [...pairedIssues, ...remainingIssues];
   });
@@ -420,7 +420,7 @@ export default async function OpenSourcePage() {
                 <h1 className="text-5xl font-black tracking-tight text-slate-950 drop-shadow-[0_2px_10px_rgba(255,255,255,0.75)] dark:text-white md:text-7xl">{openSourceConfig.title}</h1>
                 <p className="mt-5 flex max-w-3xl items-start gap-3 rounded-3xl bg-white/55 px-5 py-4 text-sm font-black leading-relaxed text-slate-700 shadow-lg shadow-slate-900/5 backdrop-blur-md dark:bg-slate-950/30 dark:text-slate-200 md:text-base">
                   <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">✦</span>
-                  记录我参与过的 Issue 与 Pull Request，自动同步 GitHub 公开记录，也可在 data/opensource.ts 中手动补充。
+                  记录我参与过的 Issue 与 Pull Request，自动同步 GitHub 公开记录，沉淀每一次开源协作轨迹。
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-5 text-left md:min-w-[360px]">
