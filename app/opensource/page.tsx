@@ -345,20 +345,24 @@ async function getOpenSourceGroups() {
 
   grouped.forEach((group) => {
     const issuesByKey = new Map(group.issues.map((issue) => [getIssueKey(issue.repo, issue.number), issue]));
-    const pairedIssues = group.prs
-      .map((pr) => {
-        if (!pr.linkedIssue) return undefined;
-        const issueKey = getIssueKey(pr.linkedIssue.repo, pr.linkedIssue.number);
-        const issue = issuesByKey.get(issueKey);
-        return issue ? { ...issue, id: `${issue.id}-paired-${pr.id}` } : undefined;
-      })
-      .filter((issue): issue is OpenSourceItem => Boolean(issue));
-    const pairedIssueKeys = new Set(pairedIssues.map((issue) => getIssueKey(issue.repo, issue.number)));
-    const remainingIssues = group.issues.filter((issue) => !pairedIssueKeys.has(getIssueKey(issue.repo, issue.number)));
-    group.issues = [...pairedIssues, ...remainingIssues];
+    const pairedPrs: OpenSourceItem[] = [];
+    const pairedIssues: OpenSourceItem[] = [];
+
+    group.prs.forEach((pr) => {
+      if (!pr.linkedIssue) return;
+      const issueKey = getIssueKey(pr.linkedIssue.repo, pr.linkedIssue.number);
+      const issue = issuesByKey.get(issueKey);
+      if (!issue) return;
+
+      pairedPrs.push(pr);
+      pairedIssues.push({ ...issue, id: `${issue.id}-paired-${pr.id}` });
+    });
+
+    group.prs = pairedPrs;
+    group.issues = pairedIssues;
   });
 
-  return Array.from(grouped.values()).sort((a, b) => {
+  return Array.from(grouped.values()).filter((group) => group.issues.length > 0 && group.prs.length > 0).sort((a, b) => {
     const orderA = openSourceProjects.findIndex((project) => project.repo === a.repo);
     const orderB = openSourceProjects.findIndex((project) => project.repo === b.repo);
     if (orderA !== -1 || orderB !== -1) return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);

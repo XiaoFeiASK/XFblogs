@@ -231,6 +231,31 @@ def is_no_commit_needed(output):
     )
 
 
+def get_source_remote_url(source_repo):
+    """Route GitHub source repositories through the dedicated B-line SSH key."""
+    normalized = source_repo.strip()
+
+    github_https = re.fullmatch(
+        r"https?://(?:[^@/]+@)?github\.com/([^/\s]+)/([^/\s]+?)(?:\.git)?/?",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if github_https:
+        owner, repository = github_https.groups()
+        return f"git@github-source:{owner}/{repository}.git"
+
+    github_ssh = re.fullmatch(
+        r"git@github\.com:([^/\s]+)/([^/\s]+?)(?:\.git)?/?",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if github_ssh:
+        owner, repository = github_ssh.groups()
+        return f"git@github-source:{owner}/{repository}.git"
+
+    return normalized
+
+
 def get_local_head(repo_path, env):
     process = run_git(["git", "rev-parse", "HEAD"], repo_path, env)
     if process.returncode != 0:
@@ -275,6 +300,7 @@ async def sync_source_to_vercel(request: Request):
 
         source_repo = config.get("sourceRepoUrl", "").strip()
         source_branch = config.get("sourceBranch", "main").strip() or "main"
+        source_remote = get_source_remote_url(source_repo)
 
         if not source_repo:
             return {"success": False, "message": "B 线源码仓库地址为空，无法同步！"}
@@ -305,7 +331,7 @@ async def sync_source_to_vercel(request: Request):
         created_commit = commit_process.returncode == 0
 
         # 3. 先拉取目标分支，避免 GitHub 上已有新提交时 push 被 rejected。
-        fetch_process = run_git(["git", "fetch", source_repo, source_branch], blog_path, custom_env)
+        fetch_process = run_git(["git", "fetch", source_remote, source_branch], blog_path, custom_env)
         fetch_log = command_output(fetch_process)
         branch_missing = fetch_process.returncode != 0 and is_missing_remote_branch(fetch_log)
 
@@ -327,7 +353,7 @@ async def sync_source_to_vercel(request: Request):
                 }
 
         # 4. 推送 (携带我们强行塞进去的钥匙环境变量)
-        push_process = run_git(["git", "push", source_repo, f"HEAD:{source_branch}"], blog_path, custom_env)
+        push_process = run_git(["git", "push", source_remote, f"HEAD:{source_branch}"], blog_path, custom_env)
 
         # 判断是否成功
         push_log = command_output(push_process)
@@ -340,7 +366,7 @@ async def sync_source_to_vercel(request: Request):
             return {"success": False, "message": f"无法读取本地提交:\n{local_error}"}
 
         remote_head, remote_error = get_remote_head(
-            blog_path, source_repo, source_branch, custom_env
+            blog_path, source_remote, source_branch, custom_env
         )
         if not remote_head:
             return {"success": False, "message": f"无法确认 GitHub 提交:\n{remote_error}"}
