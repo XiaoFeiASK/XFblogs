@@ -63,6 +63,8 @@ const getGithubUser = () => {
   return openSourceConfig.githubUser || matched?.[1] || 'XiaoFeiASK';
 };
 
+const OWNED_REPO_MIN_STARS = 50;
+
 const formatDate = (date: string) => {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return date;
@@ -248,6 +250,20 @@ async function fetchGithubIssue(repo: string, number: number | string) {
   return toOpenSourceItem(item);
 }
 
+async function fetchRepoStars(repo: string) {
+  const response = await fetch(`https://api.github.com/repos/${repo}`, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'XiaoFei-blog-opensource',
+    },
+    next: { revalidate: 60 },
+  });
+
+  if (!response.ok) return undefined;
+  const data = await response.json() as { stargazers_count?: number };
+  return typeof data.stargazers_count === 'number' ? data.stargazers_count : undefined;
+}
+
 async function getOpenSourceGroups() {
   const user = getGithubUser();
   const [issues, prs] = await Promise.all([
@@ -362,12 +378,24 @@ async function getOpenSourceGroups() {
     group.issues = pairedIssues;
   });
 
-  return Array.from(grouped.values()).filter((group) => group.issues.length > 0 && group.prs.length > 0).sort((a, b) => {
+  const groups = Array.from(grouped.values()).filter((group) => group.issues.length > 0 && group.prs.length > 0).sort((a, b) => {
     const orderA = openSourceProjects.findIndex((project) => project.repo === a.repo);
     const orderB = openSourceProjects.findIndex((project) => project.repo === b.repo);
     if (orderA !== -1 || orderB !== -1) return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
     const countDiff = (b.issues.length + b.prs.length) - (a.issues.length + a.prs.length);
     return countDiff || a.repo.localeCompare(b.repo);
+  });
+
+  const ownedGroups = groups.filter((group) => group.repo.split('/')[0]?.toLowerCase() === user.toLowerCase());
+  const ownedRepoStars = new Map(
+    (await Promise.all(ownedGroups.map(async (group) => [group.repo, await fetchRepoStars(group.repo)] as const)))
+      .filter((entry): entry is [string, number] => entry[1] !== undefined),
+  );
+
+  return groups.filter((group) => {
+    const stars = ownedRepoStars.get(group.repo);
+    const isOwnedRepo = group.repo.split('/')[0]?.toLowerCase() === user.toLowerCase();
+    return !isOwnedRepo || (stars !== undefined && stars >= OWNED_REPO_MIN_STARS);
   });
 }
 
